@@ -1,0 +1,21 @@
+<launch>
+        <!-- Motion control -->
+        <node name="motion_control" pkg="arne_motion_simulator" type="motion_control.py" output="screen">
+                <param name="twist_topic" value="/spacenav/twist"/>
+                <param name="pose_topic" value="/pose"/>
+                <param name="frame_id" value="world"/>
+                <param name="publishing_rate" value="100"/>
+        </node>
+
+        <!-- Visualization -->
+        <arg name="rvizconfig" default="$(find arne_motion_simulator)/etc/setup.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+        <!-- Load robot_description to parameter server -->
+        <param name="/robot_description"
+        command="$(find xacro)/xacro --inorder '$(find arne_motion_simulator)/urdf/simulation.urdf.xacro'" />
+
+        <!-- Menus and configuration -->
+
+
+</launch>
