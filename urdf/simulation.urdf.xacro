@@ -1,13 +1,44 @@
 <?xml version="1.0"?>
 <robot name="gripper" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+        <!-- Includes -->
+        <xacro:include filename="$(find arne_motion_simulator)/urdf/gripper.urdf.xacro"/>
+
+        <xacro:property name="side" value="1.5" />
+
         <link name="world" />
 
-        <!-- gripper -->
-        <link name="gripper" />
-        <joint name="gripper_pose" type="floating">
+        <link name="sides">
+                <visual name="bottom">
+                        <origin xyz="0 0 ${-0.5 * side}" rpy="0 0 0" />
+                        <material name="white">
+                                <color rgba="1.0 1.0 1.0 1.0"/>
+                        </material>
+                        <geometry>
+                                <box size="${side} ${side} 0.001"/>
+                        </geometry>
+                </visual>
+                <visual name="back">
+                        <origin xyz="${-0.5 * side} 0 0" rpy="0 0 0" />
+                        <geometry>
+                                <box size="0.001 ${side} ${side}"/>
+                        </geometry>
+                </visual>
+                <visual name="right">
+                        <origin xyz="0 ${0.5 * side} 0" rpy="0 0 0" />
+                        <geometry>
+                                <box size="${side} 0.001 ${side}"/>
+                        </geometry>
+                </visual>
+        </link>
+
+        <joint name="test" type="fixed">
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <parent link="world"/>
-                <child link="gripper"/>
+                <child link="sides"/>
         </joint>
+
+        <!-- gripper -->
+        <xacro:gripper parent="world"/>
+
 </robot>

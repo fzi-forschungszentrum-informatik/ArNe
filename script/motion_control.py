@@ -3,48 +3,77 @@
 import numpy as np
 import quaternion
 import rospy
+from std_msgs.msg import Float64
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import PoseStamped
 from dynamic_reconfigure.server import Server
+from arne_motion_simulator.msg import State
 from arne_motion_simulator.cfg import MotionControlConfig
 import tf
 
 
-class MotionController:
-    """ Convert Twist messages to PoseStamped
+class MotionSimulator:
+    """ A dummy simulator for gripper control in 6-D Cartesian space
 
+    This class provides two interfaces:
+    1) Control:
+       Send 6-D motion and gripper commands via the control topics (twist and speed).
+       The current state is published continuously for recording.
+
+    2) Simulation:
+       Playback of recorded streams via the simulation topic.
     """
 
     def __init__(self):
         rospy.init_node('motion_controller', anonymous=False)
 
-        self.twist_topic = rospy.get_param('~twist_topic', default="my_twist")
-        self.pose_topic = rospy.get_param('~pose_topic', default="my_wrench")
         self.frame_id = rospy.get_param('~frame_id', default="world")
         self.rate = rospy.Rate(rospy.get_param('~publishing_rate', default=100))
 
         # Cartesian motion specs
-        self.pose = PoseStamped()
+        self.state = State()
         self.rot = np.quaternion(0, 0, 0, 1)
         self.pos = [0, 0, 0]
         self.linear_sensitivity = 0.0
         self.angular_sensitivity = 0.0
+        self.gripper_sensitivity = 0.0
+        self.gripper_pos = 1.0  # 1.0 = open, 0.0 = closed
 
         # Runtime configuration
         self.config = Server(MotionControlConfig, self.config_cb)
 
-        # Input / output
-        self.pub = rospy.Publisher(self.pose_topic, PoseStamped, queue_size=3)
-        self.sub = rospy.Subscriber(self.twist_topic, Twist, self.twist_cb)
+        # Input
+        self.motion_control = rospy.Subscriber("motion_control_input", Twist, self.motion_control_cb)
+        self.gripper_control = rospy.Subscriber("gripper_control_input", Float64, self.gripper_control_cb)
+        self.simulation = rospy.Subscriber("simulation_input", State, self.simulation_cb)
+
+        # Output
+        self.state_pub = rospy.Publisher("state_output", State, queue_size=3)
         self.tf_broadcaster = tf.TransformBroadcaster()
 
     def config_cb(self, config, level):
         """ Get configuration from dynamic reconfigure """
         self.linear_sensitivity = config.linear_sensitivity
         self.angular_sensitivity = config.angular_sensitivity
+        self.gripper_sensitivity = config.gripper_sensitivity
         return config
 
-    def twist_cb(self, data):
+    def simulation_cb(self, state):
+        """ Store incomming states into buffers """
+        self.pos[0] = state.pose.position.x
+        self.pos[1] = state.pose.position.y
+        self.pos[2] = state.pose.position.z
+        self.rot.x = state.pose.orientation.x
+        self.rot.y = state.pose.orientation.y
+        self.rot.z = state.pose.orientation.z
+        self.rot.w = state.pose.orientation.w
+        self.gripper_pos = state.gripper
+
+    def gripper_control_cb(self, data):
+        """ integrate gripper speed into position"""
+        dt = 0.001  # idealized behavior
+        self.gripper_pos = max(-1.0, min(1.0, self.gripper_pos + data * dt))  # in [-1, 1]
+
+    def motion_control_cb(self, data):
         """ Numerically integrate twist message into a pose
 
         Note: Ignores data.header
@@ -67,41 +96,44 @@ class MotionController:
         _, q = quaternion.integrate_angular_velocity(lambda _: (wx, wy, wz), 0, dt, self.rot)
         self.rot = q[-1]  # Get end point of interpolation
 
-        # Build pose message
-        self.pose.header.stamp = rospy.Time.now()
-        self.pose.header.frame_id = self.frame_id
-        self.pose.pose.position.x = self.pos[0]
-        self.pose.pose.position.y = self.pos[1]
-        self.pose.pose.position.z = self.pos[2]
-        self.pose.pose.orientation.x = self.rot.x
-        self.pose.pose.orientation.y = self.rot.y
-        self.pose.pose.orientation.z = self.rot.z
-        self.pose.pose.orientation.w = self.rot.w
+        # Update state message
+        self.state.header.stamp = rospy.Time.now()
+        self.state.header.frame_id = self.frame_id
+        self.state.pose.position.x = self.pos[0]
+        self.state.pose.position.y = self.pos[1]
+        self.state.pose.position.z = self.pos[2]
+        self.state.pose.orientation.x = self.rot.x
+        self.state.pose.orientation.y = self.rot.y
+        self.state.pose.orientation.z = self.rot.z
+        self.state.pose.orientation.w = self.rot.w
 
     def update(self):
-        """ Publish the current pose to ROS topic """
+        """ Run one simulation step """
         if not rospy.is_shutdown():
             try:
-                # Message
-                self.pub.publish(self.pose)
-
-                # TF
+                # Motion control
                 self.tf_broadcaster.sendTransform(
                     (self.pos[0], self.pos[1], self.pos[2]),
                     (self.rot.x, self.rot.y, self.rot.z, self.rot.w),
                     rospy.Time.now(),
                     "gripper",
                     self.frame_id)
+
+                # Gripper control
+
+                # Feedback
+                self.state_pub.publish(self.state)
+
             except rospy.ROSException:
                 # Swallow 'publish() to closed topic' error.
                 pass
 
 
 if __name__ == '__main__':
-    controller = MotionController()
+    sim = MotionSimulator()
     try:
         while not rospy.is_shutdown():
-            controller.update()
-            controller.rate.sleep()
+            sim.update()
+            sim.rate.sleep()
     except rospy.ROSInterruptException:
         pass

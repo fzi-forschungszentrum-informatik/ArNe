@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 298
   - Class: rviz/Selection
@@ -32,7 +31,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1.5
+      Cell Size: 0.100000001
       Class: rviz/Grid
       Color: 70; 70; 70
       Enabled: true
@@ -40,42 +39,37 @@ Visualization Manager:
         Line Width: 0.0299999993
         Value: Lines
       Name: Grid
-      Normal Cell Count: 1
+      Normal Cell Count: 0
       Offset:
         X: 0
         Y: 0
-        Z: 0
+        Z: -0.75
       Plane: XY
-      Plane Cell Count: 1
+      Plane Cell Count: 15
       Reference Frame: <Fixed Frame>
-      Value: true
-    - Alpha: 1
-      Axes Length: 0.200000003
-      Axes Radius: 0.0199999996
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.300000012
-      Head Radius: 0.100000001
-      Name: Pose
-      Shaft Length: 1
-      Shaft Radius: 0.0500000007
-      Shape: Axes
-      Topic: /pose
-      Unreliable: false
       Value: true
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
-      Marker Scale: 1
+        All Enabled: false
+        gripper:
+          Value: true
+        sides:
+          Value: false
+        world:
+          Value: false
+      Marker Scale: 0.5
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: true
+      Show Names: false
       Tree:
-        {}
+        world:
+          gripper:
+            {}
+          sides:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -83,8 +77,7 @@ Visualization Manager:
       Collision Enabled: false
       Enabled: true
       Links:
-        All Links Enabled:
-          {}
+        All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
@@ -93,6 +86,12 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
+        sides:
+          Alpha: 0.5
+          Show Axes: false
+          Show Trail: false
+          Value: true
         world:
           Alpha: 1
           Show Axes: false
@@ -105,7 +104,7 @@ Visualization Manager:
       Visual Enabled: true
   Enabled: true
   Global Options:
-    Background Color: 223; 223; 223
+    Background Color: 255; 255; 255
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -128,25 +127,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.32988667
+      Distance: 2.89366007
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.396042824
-        Y: -0.194043383
-        Z: -0.0226345658
+        X: 0.0497385263
+        Y: -0.0331405103
+        Z: -0.213546574
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.340398222
+      Pitch: 0.344797075
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.62856722
+      Yaw: 5.623559
     Saved: ~
 Window Geometry:
   Displays:
@@ -164,5 +163,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 986
-  X: 395
-  Y: 162
+  X: 478
+  Y: 202
