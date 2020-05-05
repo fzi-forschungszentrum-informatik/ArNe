@@ -7,6 +7,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 from dynamic_reconfigure.server import Server
 from arne_motion_simulator.cfg import MotionControlConfig
+import tf
 
 
 class MotionController:
@@ -35,6 +36,7 @@ class MotionController:
         # Input / output
         self.pub = rospy.Publisher(self.pose_topic, PoseStamped, queue_size=3)
         self.sub = rospy.Subscriber(self.twist_topic, Twist, self.twist_cb)
+        self.tf_broadcaster = tf.TransformBroadcaster()
 
     def config_cb(self, config, level):
         """ Get configuration from dynamic reconfigure """
@@ -80,7 +82,16 @@ class MotionController:
         """ Publish the current pose to ROS topic """
         if not rospy.is_shutdown():
             try:
+                # Message
                 self.pub.publish(self.pose)
+
+                # TF
+                self.tf_broadcaster.sendTransform(
+                    (self.pos[0], self.pos[1], self.pos[2]),
+                    (self.rot.x, self.rot.y, self.rot.z, self.rot.w),
+                    rospy.Time.now(),
+                    "gripper",
+                    self.frame_id)
             except rospy.ROSException:
                 # Swallow 'publish() to closed topic' error.
                 pass
