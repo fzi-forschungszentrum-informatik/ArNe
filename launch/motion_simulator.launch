@@ -15,7 +15,7 @@
 
         <!-- Robot state publisher for TFs -->
         <node name="robot_state_publisher" type="robot_state_publisher" pkg="robot_state_publisher" >
-                <param name="publish_frequency" type="double" value="100.0" />
+                <param name="publish_frequency" type="double" value="200.0" />
         </node>
 
         <!-- Menus and configuration -->
