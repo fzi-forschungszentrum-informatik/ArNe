@@ -4,6 +4,7 @@ import numpy as np
 import quaternion
 import rospy
 from std_msgs.msg import Float64
+from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
 from dynamic_reconfigure.server import Server
 from arne_motion_simulator.msg import State
@@ -36,7 +37,9 @@ class MotionSimulator:
         self.linear_sensitivity = 0.0
         self.angular_sensitivity = 0.0
         self.gripper_sensitivity = 0.0
-        self.gripper_pos = 1.0  # 1.0 = open, 0.0 = closed
+        self.gripper_max = 0.075
+        self.gripper_min = 0.01
+        self.gripper_pos = self.gripper_max  # Start with open gripper
 
         # Runtime configuration
         self.config = Server(MotionControlConfig, self.config_cb)
@@ -47,6 +50,7 @@ class MotionSimulator:
         self.simulation = rospy.Subscriber("simulation_input", State, self.simulation_cb)
 
         # Output
+        self.gripper_pub = rospy.Publisher("/joint_states", JointState, queue_size=3)
         self.state_pub = rospy.Publisher("state_output", State, queue_size=3)
         self.tf_broadcaster = tf.TransformBroadcaster()
 
@@ -68,10 +72,10 @@ class MotionSimulator:
         self.rot.w = state.pose.orientation.w
         self.gripper_pos = state.gripper
 
-    def gripper_control_cb(self, data):
+    def gripper_control_cb(self, msg):
         """ integrate gripper speed into position"""
         dt = 0.001  # idealized behavior
-        self.gripper_pos = max(-1.0, min(1.0, self.gripper_pos + data * dt))  # in [-1, 1]
+        self.gripper_pos = max(self.gripper_min, min(self.gripper_max, self.gripper_pos + msg.data * dt))  # in [0, 1]
 
     def motion_control_cb(self, data):
         """ Numerically integrate twist message into a pose
@@ -120,6 +124,11 @@ class MotionSimulator:
                     self.frame_id)
 
                 # Gripper control
+                gripper_state = JointState()
+                gripper_state.header.stamp = rospy.Time.now()
+                gripper_state.name.append("finger_left_joint")
+                gripper_state.position.append(self.gripper_pos)
+                self.gripper_pub.publish(gripper_state)
 
                 # Feedback
                 self.state_pub.publish(self.state)
