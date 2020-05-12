@@ -30,6 +30,12 @@ class MotionSimulator:
         self.frame_id = rospy.get_param('~frame_id', default="world")
         self.rate = rospy.Rate(rospy.get_param('~publishing_rate', default=100))
 
+        # Limits (check urdf)
+        self.gripper_max = 0.075
+        self.gripper_min = 0.01
+        self.pos_min = -0.75
+        self.pos_max = 0.75
+
         # Cartesian motion specs
         self.state = State()
         self.rot = np.quaternion(0, 0, 0, 1)
@@ -37,8 +43,6 @@ class MotionSimulator:
         self.linear_sensitivity = 0.0
         self.angular_sensitivity = 0.0
         self.gripper_sensitivity = 0.0
-        self.gripper_max = 0.075
-        self.gripper_min = 0.01
         self.gripper_pos = self.gripper_max  # Start with open gripper
 
         # Runtime configuration
@@ -85,13 +89,17 @@ class MotionSimulator:
         Use self.frame_id as reference for the navigation commands, i.e. the
         resulting pose is with respect to that frame.  Sensitivity of linear
         and angular motion is adjusted with dynamic reconfigure.
+        The pose is restricted to specified limits.
         """
         dt = 0.001  # idealized behavior
 
+        def limit(value):
+            return max(self.pos_min, min(self.pos_max, value))
+
         # Position update
-        self.pos[0] += data.linear.x * dt * self.linear_sensitivity
-        self.pos[1] += data.linear.y * dt * self.linear_sensitivity
-        self.pos[2] += data.linear.z * dt * self.linear_sensitivity
+        self.pos[0] = limit(self.pos[0] + data.linear.x * dt * self.linear_sensitivity)
+        self.pos[1] = limit(self.pos[1] + data.linear.y * dt * self.linear_sensitivity)
+        self.pos[2] = limit(self.pos[2] + data.linear.z * dt * self.linear_sensitivity)
 
         # Orientation update
         wx = data.angular.x * self.angular_sensitivity
