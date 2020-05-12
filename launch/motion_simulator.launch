@@ -18,7 +18,10 @@
                 <param name="publish_frequency" type="double" value="200.0" />
         </node>
 
-        <!-- Menus and configuration -->
+        <!-- ROS bridge server for GUI communication -->
+        <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+                <arg name="port" value="8001"/>
+        </include>
 
 
 </launch>
