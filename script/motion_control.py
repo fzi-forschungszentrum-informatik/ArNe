@@ -75,7 +75,7 @@ class MotionSimulator:
         self.rot.y = state.pose.orientation.y
         self.rot.z = state.pose.orientation.z
         self.rot.w = state.pose.orientation.w
-        self.gripper_pos = state.gripper
+        self.gripper_pos = state.gripper.data
 
     def gripper_control_cb(self, msg):
         """ integrate gripper speed into position"""
