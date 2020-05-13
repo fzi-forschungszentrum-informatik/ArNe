@@ -38,6 +38,7 @@ class MotionSimulator:
 
         # Cartesian motion specs
         self.state = State()
+        self.state.header.frame_id = self.frame_id
         self.rot = np.quaternion(0, 0, 0, 1)
         self.pos = [0, 0, 0]
         self.linear_sensitivity = 0.0
@@ -80,6 +81,8 @@ class MotionSimulator:
         """ integrate gripper speed into position"""
         dt = 0.001  # idealized behavior
         self.gripper_pos = max(self.gripper_min, min(self.gripper_max, self.gripper_pos + msg.data * dt))  # in [0, 1]
+        self.state.header.stamp = rospy.Time.now()
+        self.state.gripper.data = self.gripper_pos
 
     def motion_control_cb(self, data):
         """ Numerically integrate twist message into a pose
@@ -110,7 +113,6 @@ class MotionSimulator:
 
         # Update state message
         self.state.header.stamp = rospy.Time.now()
-        self.state.header.frame_id = self.frame_id
         self.state.pose.position.x = self.pos[0]
         self.state.pose.position.y = self.pos[1]
         self.state.pose.position.z = self.pos[2]
