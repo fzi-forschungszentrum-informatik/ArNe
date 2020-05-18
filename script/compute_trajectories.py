@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 from rosbag import Bag
 import numpy as np
+import os
+import csv
 """
-Compute a state-dimensional trajectory from a rosbag recording
+Compute a state-dimensional trajectory from a rosbag recording.
+The trajectory has position, velocity and acceleration values for each of the
+state's dimensions.
+
+The trajectory is saved as a .csv file in the trajectories subfolder of this
+package, keeping the rosbag's name.
 """
 
 # Read states from rosbag and separate dimensions
@@ -122,88 +129,33 @@ h = time[-1] / len(time)  # step width
 #states = smooth(states)
 states_dot = diff(states, h)
 states_ddot = diff(states_dot, h)
-#states_ddot = ddiff(states, h)
 
-# TODO: Write trajectory as .csv to the ../trajectories folder
 
 #--------------------------------------------------------------------------------
-import matplotlib.pyplot as plt
-# Plot state-dimensional time series into different sub plots
-states = np.array(states)
-nrows = 8  # state dim
-ncols = 1
+# Write trajectory as .csv to the ../trajectories folder
+#--------------------------------------------------------------------------------
 
-fig, grid = plt.subplots(nrows, ncols, sharey="row", figsize=(25, 20))
-fig.subplots_adjust(wspace=0.15, hspace=0.15)
+# Create trajectory folder if non-existent
+traj_folder = "../trajectories"
+if not os.path.exists(traj_folder):
+    os.mkdir(traj_folder)
 
-# Labels for y axis
-y = [
-    '$x \quad [m]$',
-    '$y \quad [m]$',
-    '$z \quad [m]$',
-    '$q_x \quad []$',
-    '$q_y \quad []$',
-    '$q_z \quad []$',
-    '$q_w \quad []$',
-    '$g \quad [m]$'
-]
-dy = [
-    '$\dot{x} \quad [m/s]$',
-    '$\dot{y} \quad [m/s]$',
-    '$\dot{z} \quad [m/s]$',
-    '$\dot{q}_x \quad [1/s]$',
-    '$\dot{q}_y \quad [1/s]$',
-    '$\dot{q}_z \quad [1/s]$',
-    '$\dot{q}_w \quad [1/s]$',
-    '$\dot{g} \quad [m/s]$'
-]
-ddy = [
-    '$\ddot{x} \quad [m/s^2]$',
-    '$\ddot{y} \quad [m/s^2]$',
-    '$\ddot{z} \quad [m/s^2]$',
-    '$\ddot{q}_x \quad [1/s^2]$',
-    '$\ddot{q}_y \quad [1/s^2]$',
-    '$\ddot{q}_z \quad [1/s^2]$',
-    '$\ddot{q}_w \quad [1/s^2]$',
-    '$\ddot{g} \quad [m/s^2]$'
-]
-
-for i in range(nrows):
-    # f
-    color = 'tab:blue'
-    label = '{}$'.format(y[i].split(' ')[0])
-    grid[i].set_xlabel('time [s]')
-    grid[i].set_ylabel(y[i], color=color, fontsize=15)
-    grid[i].plot(time, states[i, :], color=color, label=label)
-    grid[i].tick_params(axis='y', labelcolor=color)
-    grid[i].legend(markerscale=5, loc='upper right', bbox_to_anchor=(1.0, 1.0))
-
-    # f'
-    color = 'tab:orange'
-    label = '{}$'.format(dy[i].split(' ')[0])
-    ax2 = grid[i].twinx()  # instantiate a second axes that shares the same x-axis
-    ax2.set_ylabel(dy[i], color=color, fontsize=15)
-    ax2.plot(time, states_dot[i, :], color=color, label=label)
-    ax2.tick_params(axis='y', labelcolor=color)
-    ax2.legend(markerscale=5, loc='upper right', bbox_to_anchor=(1.0, 0.8))
-
-    # f''
-    color = 'tab:red'
-    label = '{}$'.format(ddy[i].split(' ')[0])
-    ax3 = grid[i].twinx()
-    ax3.spines["right"].set_position(("axes", 1.05))
-    ax3.set_ylabel(ddy[i], color=color, fontsize=15)
-    ax3.plot(time, states_ddot[i, :], color=color, label=label)
-    ax3.tick_params(axis='y', labelcolor=color)
-    ax3.legend(markerscale=5, loc='upper right', bbox_to_anchor=(1.0, 0.6))
-
-
-# Drog .bag extension and save to ../trajectories
+# Re-use recorded rosbag name for .csv file
 outfile = bagfile.split('/')[-1]
-outfile = outfile.split('.')[0]
-outfile = '../trajectories/{}_traj.pdf'.format(outfile)
-plt.savefig(outfile, format='pdf', bbox_inches='tight')
-#--------------------------------------------------------------------------------
+outfile = outfile.split('.')[0] + '.csv'
+outfile = '{}/{}'.format(traj_folder, outfile)
+
+# Make data time major for easier writing
+states = np.array(states).transpose()
+states_dot = np.array(states_dot).transpose()
+states_ddot = np.array(states_ddot).transpose()
+
+# Save values as .csv files.
+# Format: time (1 value), states (8 values), d/dt states (8 values), d^2/dt^2 states (8 values)
+with open(outfile, 'w') as f:
+    writer = csv.writer(f, delimiter=' ')
+    for i in range(len(time)):
+        writer.writerow([time[i]] + states[i].tolist() + states_dot[i].tolist() + states_ddot[i].tolist())
 
 # Finish
 print("done")
