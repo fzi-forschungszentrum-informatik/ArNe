@@ -8,7 +8,7 @@ import os
 """
 
 # Read trajectory from .csv file
-traj_file = "../trajectories/2020-05-13-17-21-55.csv"
+traj_file = "../trajectories/example.csv"
 
 time = []
 states = []

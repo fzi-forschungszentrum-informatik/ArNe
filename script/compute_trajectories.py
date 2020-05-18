@@ -15,7 +15,7 @@ package, keeping the rosbag's name.
 # Read states from rosbag and separate dimensions
 states = []
 time = []
-bagfile = '/home/scherzin/src/robot_folders/checkout/arne/catkin_ws/src/arne_skill_pipeline/rosbags/2020-05-13-17-21-55.bag'
+bagfile = '../rosbags/example.bag'
 with Bag(bagfile) as bag:
     start = bag.get_start_time()
     for topic, msg, t in bag:
