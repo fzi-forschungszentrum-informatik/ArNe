@@ -24,13 +24,22 @@ def f(x):
 x = np.arange(1, 20, 0.1)
 y = f(x)
 
+n_gaussians = 3
 
-def gauss(x, param):
-    """ Basis function"""
-    a = param[0]
-    h = param[1]
-    c = param[2]
-    return np.array([a * np.exp(-h * np.power(i - c, 2)) for i in x])
+
+def gauss(x, param_set):
+    """ Linear combination of Gaussian basis functions"""
+    params = np.split(param_set, 3)
+    w = params[0]  # weights
+    h = params[1]  # widths
+    c = params[2]  # locations
+
+    def weighted_sum(x):
+        result = 0
+        for i in range(n_gaussians):
+            result += w[i] * np.exp(-h[i] * np.power(x - c[i], 2))
+        return result
+    return np.array([weighted_sum(i) for i in x])
 
 
 def find_optimal_params(candidates):
@@ -47,18 +56,17 @@ def find_optimal_params(candidates):
     return np.array(cost)
 
 
-n_params = 3  # a, h and c
-
 # Create bounds
-min_bound = np.array([-10, 0.001, -2])
-max_bound = np.array([10, 10, 2])
+# w, h, c
+min_bound = np.array([-10] * n_gaussians + [0.001] * n_gaussians + [1.0] * n_gaussians)
+max_bound = np.array([10] * n_gaussians + [10] * n_gaussians + [20.0] * n_gaussians)
 bounds = (min_bound, max_bound)
 
 # PSO hyper parameters
-options = {'c1': 0.5, 'c2': 0.3, 'w': 0.9}
+options = {'c1': 0.5, 'c2': 0.3, 'w': 0.99}
 #import ipdb; ipdb.set_trace()
 
-optimizer = ps.single.global_best.GlobalBestPSO(n_particles=20, dimensions=n_params, options=options, bounds=bounds)
+optimizer = ps.single.global_best.GlobalBestPSO(n_particles=20, dimensions=3 * n_gaussians, options=options, bounds=bounds)
 cost, pos = optimizer.optimize(find_optimal_params, iters=100, n_processes=2)
 
 # Plot results
