@@ -7,17 +7,29 @@ import matplotlib.pyplot as plt
 
 
 class Trajectory(object):
-    """ A minimal trajectory class"""
+    """ A minimal trajectory class """
 
     def __init__(self, times, states, states_dot, states_ddot):
-        """ All containers are time-major
+        """ Initialize a trajectory
 
-        First index time, second the state's dimension.
+        All arrays are time-major, i.e. they
+        first index time, and second the state's dimension.
         """
-        self.times = times
-        self.states = states
-        self.states_dot = states_dot
-        self.states_ddot = states_ddot
+        self.times = np.array(times)
+        self.states = np.array(states)
+        self.states_dot = np.array(states_dot)
+        self.states_ddot = np.array(states_ddot)
+
+        self.nr_points = self.times.shape[0]
+        self.state_dim = self.states.shape[1]
+
+        # Equal time axis
+        if not self.nr_points == self.states.shape[0] == self.states_dot.shape[0] == self.states_ddot.shape[0]:
+            raise ValueError("time axes are not equal")
+
+        # Equal state dimension
+        if not self.state_dim == self.states_dot.shape[1] == self.states_ddot.shape[1]:
+            raise ValueError("state dimensions do not match")
 
 
 def read_rosbag(bagfile):
@@ -40,9 +52,6 @@ def read_rosbag(bagfile):
                 ])
                 time.append(t.to_sec() - start)  # Seconds from start
 
-    # Make states an array of sampled functions
-    # states = [x(t), y(t), z(t), qx(t), qy(t), qz(t), qw(t), g(t)]
-    states = np.array(states).transpose()
     return time, states
 
 
@@ -54,10 +63,14 @@ def diff(states, h):
     Formulas are from Pavel Holoborodko (holoborodko.com).
 
     Args:
-        states: A list of sequences. Each sequence represents discrete function evaluations.
+        states: A time major array of states.
         h: Step width. Average duration between two samples.
 
     """
+    # Make states an array of sampled functions.
+    # states = [x(t), y(t), z(t), qx(t), qy(t), qz(t), qw(t), g(t)]
+    states = np.array(states).transpose()
+
     values_dot = []
     for f in states:
         f_dot = []
@@ -75,7 +88,9 @@ def diff(states, h):
             df = (5 * (f1 - f_1) + 4 * (f2 - f_2) + f3 - f_3) / (32 * h)
             f_dot.append(df)
         values_dot.append(f_dot)
-    return np.array(values_dot)
+
+    # Make time major again
+    return np.array(values_dot).transpose()
 
 
 def compute_trajectory(times, states):
@@ -95,6 +110,9 @@ def compute_trajectory(times, states):
 
 def save_trajectory(file_name, trajectory):
     """ Write trajectory as .csv file in the trajectories folder
+
+    Each line represents a single trajectory point with:
+    time from start (1 value), states (8 values), d/dt states (8 values), d^2/dt^2 states (8 values)
     """
     # Create trajectory folder if non-existent
     traj_folder = "../trajectories"
@@ -103,17 +121,11 @@ def save_trajectory(file_name, trajectory):
 
     outfile = '{}/{}'.format(traj_folder, file_name)
 
-    # Make data time major for easier writing
-    states = np.array(trajectory.states).transpose()
-    states_dot = np.array(trajectory.states_dot).transpose()
-    states_ddot = np.array(trajectory.states_ddot).transpose()
-
     # Save values as .csv files.
-    # Format: time (1 value), states (8 values), d/dt states (8 values), d^2/dt^2 states (8 values)
     with open(outfile, 'w') as f:
         writer = csv.writer(f, delimiter=' ')
         for i in range(len(trajectory.times)):
-            writer.writerow([trajectory.times[i]] + states[i].tolist() + states_dot[i].tolist() + states_ddot[i].tolist())
+            writer.writerow([trajectory.times[i]] + trajectory.states[i].tolist() + trajectory.states_dot[i].tolist() + trajectory.states_ddot[i].tolist())
 
 
 def read_trajectory(traj_file):
