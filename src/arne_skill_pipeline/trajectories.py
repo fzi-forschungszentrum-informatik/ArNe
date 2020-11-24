@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 class Trajectory(object):
-    """ A minimal trajectory class """
+    """ A multi-dimensional trajectory """
 
     def __init__(self, times, states, states_dot, states_ddot):
         """ Initialize a trajectory
@@ -30,6 +30,22 @@ class Trajectory(object):
         # Equal state dimension
         if not self.state_dim == self.states_dot.shape[1] == self.states_ddot.shape[1]:
             raise ValueError("state dimensions do not match")
+
+    def get_dimension(self, index):
+        """ Index individual dimensions
+
+        Returns trajectory data for the given index in the form:
+        timesteps, positions, velocities, accelerations.
+        """
+        if int(index) < 0 or int(index) >= self.state_dim:
+            raise ValueError("Index for state dimension exceeds bounds. Max index is {}".format(self.state_dim - 1))
+
+        result = (
+            self.times.transpose()[index],
+            self.states.transpose()[index],
+            self.states_dot.transpose()[index],
+            self.states_ddot.transpose()[index])
+        return result
 
 
 def read_rosbag(bagfile):
