@@ -20,6 +20,7 @@ class Trajectory(object):
         self.states_dot = np.array(states_dot)
         self.states_ddot = np.array(states_ddot)
 
+        self.duration = self.times[-1]
         self.nr_points = self.times.shape[0]
         self.state_dim = self.states.shape[1]
 
