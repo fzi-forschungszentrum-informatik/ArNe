@@ -34,18 +34,27 @@ class Trajectory(object):
     def get_dimension(self, index):
         """ Index individual dimensions
 
-        Returns trajectory data for the given index in the form:
-        timesteps, positions, velocities, accelerations.
+        Returns a dictionary of the trajectory data for the given index with
+        the keys time, pos, vel, acc.
         """
         if int(index) < 0 or int(index) >= self.state_dim:
             raise ValueError("Index for state dimension exceeds bounds. Max index is {}".format(self.state_dim - 1))
 
-        result = (
-            self.times.transpose()[index],
-            self.states.transpose()[index],
-            self.states_dot.transpose()[index],
-            self.states_ddot.transpose()[index])
+        result = {
+            'time': self.times,
+            'pos': self.states.transpose()[index],
+            'vel': self.states_dot.transpose()[index],
+            'acc': self.states_ddot.transpose()[index]
+        }
         return result
+
+    def __getitem__(self, index):
+        """ Index operator for individual trajectory dimensions
+
+        Returns a dictionary of the trajectory data for the given index with
+        the keys time, pos, vel, acc.
+        """
+        return self.get_dimension(index)
 
 
 def read_rosbag(bagfile):
