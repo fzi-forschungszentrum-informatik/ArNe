@@ -59,18 +59,19 @@ class Trajectory(object):
         """
         return self.get_dimension(index)
 
-    def specs(self):
+    def __str__(self):
         """ Return a readable string of most important specifications """
 
-        s = "Specification of the current trajectory:"
-        s += "\n========================================"
-        s += "\ntimes: {}".format(len(self.times))
-        s += "\nstates: {}".format(len(self.states))
-        s += "\nstates_dot: {}".format(len(self.states_dot))
-        s += "\nstates_ddot: {}".format(len(self.states_ddot))
-        s += "\nduration: {}".format(self.duration)
-        s += "\nnr_points: {}".format(self.nr_points)
-        s += "\nstate_dim: {}".format(self.state_dim)
+        s = "--------------------------"
+        s += "\nTrajectory:"
+        s += "\n--------------------------"
+        s += "\ntimes: \t\t{}".format(len(self.times))
+        s += "\nstates: \t{}".format(len(self.states))
+        s += "\nstates_dot: \t{}".format(len(self.states_dot))
+        s += "\nstates_ddot: \t{}".format(len(self.states_ddot))
+        s += "\nduration: \t{}".format(self.duration)
+        s += "\nnr_points: \t{}".format(self.nr_points)
+        s += "\nstate_dim: \t{}".format(self.state_dim)
         return s
 
 

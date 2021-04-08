@@ -30,9 +30,10 @@ if __name__ == "__main__":
     traj.write_rosbag(trajectory_2, './../rosbags/example_2.sim')
     traj.write_rosbag(trajectory_3, './../rosbags/example_3.sim')
 
-    print(trajectory_1.specs())
-    print(trajectory_2.specs())
-    print(trajectory_3.specs())
+    # Check specifications
+    print(trajectory_1)
+    print(trajectory_2)
+    print(trajectory_3)
 
     # --------------------------------------------------------------------------------
     # Save a single pdf to the trajectory folder
