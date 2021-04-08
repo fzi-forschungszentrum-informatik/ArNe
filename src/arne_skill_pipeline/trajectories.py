@@ -57,6 +57,20 @@ class Trajectory(object):
         """
         return self.get_dimension(index)
 
+    def specs(self):
+        """ Return a readable string of most important specifications """
+
+        s = "Specification of the current trajectory:"
+        s += "\n========================================"
+        s += "\ntimes: {}".format(len(self.times))
+        s += "\nstates: {}".format(len(self.states))
+        s += "\nstates_dot: {}".format(len(self.states_dot))
+        s += "\nstates_ddot: {}".format(len(self.states_ddot))
+        s += "\nduration: {}".format(self.duration)
+        s += "\nnr_points: {}".format(self.nr_points)
+        s += "\nstate_dim: {}".format(self.state_dim)
+        return s
+
 
 def read_rosbag(bagfile):
     """ Read states from a rosbag file """
