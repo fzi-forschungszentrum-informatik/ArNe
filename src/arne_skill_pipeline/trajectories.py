@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 from rosbag import Bag
+from rospy import Duration
 import numpy as np
 import os
 import csv
 import matplotlib.pyplot as plt
+from arne_motion_simulator.msg import State
 
 
 class Trajectory(object):
@@ -95,6 +97,30 @@ def read_rosbag(bagfile):
     return time, states
 
 
+def write_rosbag(trajectory, filename):
+    """ Write the given trajectory into a rosbag file
+
+    This produces a state-only trajectory with the ROS topic /simulation_input.
+    Replay this rosbag for the arne_motion_simulator with
+
+    rosbag play <bagfile>
+
+    """
+    with Bag(filename, 'w') as bag:
+        for state, t in zip(trajectory.states, trajectory.times):
+            msg = State()
+            msg.pose.position.x = state[0]
+            msg.pose.position.y = state[1]
+            msg.pose.position.z = state[2]
+            msg.pose.orientation.x = state[3]
+            msg.pose.orientation.y = state[4]
+            msg.pose.orientation.z = state[5]
+            msg.pose.orientation.w = state[6]
+            msg.gripper.data = state[7]
+
+            bag.write('/simulation_input', msg, Duration(t))
+
+
 def diff(states, h):
     """ Smooth differentiator
 
@@ -134,7 +160,7 @@ def diff(states, h):
 
 
 def compute_trajectory(times, states):
-    """ Compute a trajectory from a given rosbag file
+    """ Compute a trajectory from given states
 
     The trajectory has position, velocity and acceleration values for each of the
     state's dimensions.

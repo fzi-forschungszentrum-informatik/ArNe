@@ -25,6 +25,11 @@ if __name__ == "__main__":
     trajectory_2 = skill.generate_new_trajectory(start_state, goal_state, duration=12.5)
     trajectory_3 = skill.generate_new_trajectory(start_state, goal_state, duration=14.5)
 
+    # Store trajectories as rosbags for playback in the simulator
+    traj.write_rosbag(trajectory_1, './../rosbags/example_1.sim')
+    traj.write_rosbag(trajectory_2, './../rosbags/example_2.sim')
+    traj.write_rosbag(trajectory_3, './../rosbags/example_3.sim')
+
     print(trajectory_1.specs())
     print(trajectory_2.specs())
     print(trajectory_3.specs())
