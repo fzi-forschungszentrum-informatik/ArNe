@@ -1,4 +1,3 @@
-# Arne Robot Simulator
-A lightweight simulation package for different robots in the *ArNE* project.
+# Arne Application
+High-level program logic for skill-based robot control within the *ArNe* project.
 
-The idea is to provide a simple platform to record and replay motion skills with realistic robot kinematics.
