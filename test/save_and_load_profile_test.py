@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import arne_skill_pipeline.trajectories as traj
 from arne_skill_pipeline.skill import Skill
 import os

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import arne_skill_pipeline.trajectories as traj
 
 """ Read a trajectory .csv file and plot the state-dimensional time series to pdf
