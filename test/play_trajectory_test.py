@@ -18,7 +18,7 @@ if __name__ == '__main__':
     trajectory = traj.read_trajectory(trajectory_data)
 
     # Prepare ROS topic publishing here
-    pub = rospy.Publisher('test', State, queue_size=10)
+    pub = rospy.Publisher('simulation_input', State, queue_size=10)
 
     player = TrajectoryPlayer(pub)
     player.play(trajectory)  # spawns separate thread
