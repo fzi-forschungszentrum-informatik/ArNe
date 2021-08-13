@@ -1,9 +1,5 @@
 import rospy
-import time
-import os
-from datetime import datetime
-from geometry_msgs.msg import PoseStamped
-import time
+from arne_motion_simulator.msg import State
 import threading
 
 
@@ -18,36 +14,56 @@ class TrajectoryPlayer(object):
     this player continuously publishes the trajectory as discrete target poses
     for the robot's end-effector and its gripper.
 
-
-    Things to clarify
-    - interpolate between waypoints?
-       - duration should stay as implicitly given
-       - but the interpolation might need adjustments to work with different
-         controllers and hardware interfaces
-
     """
 
     def __init__(self, publisher):
+        """ Initialize the player with an ArNe State publisher
 
-        # The message type is known here.
-        # It does not have to be too generic.
-        # Passing the publisher is important, though.  We use this here as a
-        # library and should not become a rosnode ourselves.
+        Passing the publisher is important to not become a rosnode ourselves.
+        """
         self.pub = publisher
         self.paused = False
 
-    def _publish(self):
-        while self.play_thread.is_alive():
-            if not self.paused:
-                msg = PoseStamped()
+    def _publish(self, trajectory):
+        """ Publish the trajectory as discrete State topics to ROS
+
+        We use a timer object to publish trajectory waypoints in equidistant
+        time steps.  This function returns once the trajectory is finished or
+        once the player has been stopped.
+        """
+        msg = State()
+        idx = 0
+
+        def finished():
+            return idx >= trajectory.nr_points
+
+        def _do_publish(event):
+            nonlocal idx
+            if not self.paused and not finished():
+                msg.header.stamp = rospy.Time.now()
+                msg.pose.position.x = trajectory.states[idx][0]
+                msg.pose.position.y = trajectory.states[idx][1]
+                msg.pose.position.z = trajectory.states[idx][2]
+                msg.pose.orientation.x = trajectory.states[idx][3]
+                msg.pose.orientation.y = trajectory.states[idx][4]
+                msg.pose.orientation.z = trajectory.states[idx][5]
+                msg.pose.orientation.w = trajectory.states[idx][6]
+                msg.gripper.data = trajectory.states[idx][7]
                 self.pub.publish(msg)
-                time.sleep(0.1)
-            else:
-                time.sleep(0.1)
+                idx += 1
+
+        # Trajectories have equidistant time spacing
+        period = rospy.Duration(trajectory.duration / trajectory.nr_points)
+        timer = rospy.Timer(period, _do_publish)
+
+        while self.play_thread.is_alive() and not finished():
+            rospy.sleep(0.1)
+        timer.shutdown()
 
     def play(self, trajectory):
         """ Play the trajectory for robot control
 
+        This function is non-blocking.
         Each trajectory starts with the robot's current pose.
         The high-level code using this player must make sure that each
         trajectory is adequately parameterized before replay.
@@ -56,14 +72,14 @@ class TrajectoryPlayer(object):
 
         This method does the following:
         - Preempt old trajectories with new ones
-        - Continuously publish to defined ros topics in a separate thread
+        - Continuously publish to Ros topics in a separate thread
         """
         # Preempt any playing trajectory.
         # This is a no-op in case nothing is playing.
         self.stop()
 
         # Start publishing in a separate thread
-        self.play_thread = threading.Thread(target=self._publish, args=(), daemon=True)
+        self.play_thread = threading.Thread(target=self._publish, args=(trajectory, ), daemon=True)
         self.play_thread.start()
         return self.play_thread.is_alive()
 
@@ -72,7 +88,7 @@ class TrajectoryPlayer(object):
 
         """
         self.paused = not self.paused
-        return self.play_thread.is_alive()
+        return True
 
     def stop(self):
         """ Stop trajectory replay
