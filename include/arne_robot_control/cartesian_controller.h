@@ -13,7 +13,7 @@
 #include <cartesian_motion_controller/cartesian_motion_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <arne_motion_simulator/State.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/Twist.h>
 
 namespace arne_robot_control
 {
@@ -45,7 +45,7 @@ namespace arne_robot_control
       geometry_msgs::Twist m_control;
       ros::Subscriber m_control_subscriber;
       ros::Subscriber m_replay_subscriber;
-      void controlCallback(const geometry_msgs::TwistStamped& input);
+      void controlCallback(const geometry_msgs::Twist& input);
       void replayCallback(const arne_motion_simulator::State& state);
   };
 

@@ -69,9 +69,9 @@ namespace arne_robot_control
     MotionBase::update(time, period);
   }
 
-  void CartesianController::controlCallback(const geometry_msgs::TwistStamped& input)
+  void CartesianController::controlCallback(const geometry_msgs::Twist& input)
   {
-    m_control = input.twist;
+    m_control = input;
   }
 
   void CartesianController::replayCallback(const arne_motion_simulator::State& state)
