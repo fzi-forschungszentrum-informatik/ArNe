@@ -1,4 +1,5 @@
-joint_names: &aria_v2_joints
+# For the hw interface
+joint_names:
     - Joint_1
     - Joint_2
     - Joint_3
@@ -7,13 +8,42 @@ joint_names: &aria_v2_joints
     - Joint_6
     - Joint_7
 
+# For ROS controllers
+arm_only: &arm_only
+    - Joint_1
+    - Joint_2
+    - Joint_3
+    - Joint_4
+    - Joint_5
+    - Joint_6
+
+cartesian_controller:
+    type: "arne_robot_control/CartesianController"
+    ik_solver: "damped_least_squares"
+    end_effector_link: "eef_link"
+    robot_base_link: "Link_0"
+    joints: *arm_only
+
+    pd_gains:
+        trans_x: {p: 1.0}
+        trans_y: {p: 1.0}
+        trans_z: {p: 1.0}
+        rot_x: {p: 1.0}
+        rot_y: {p: 1.0}
+        rot_z: {p: 1.0}
+
+    solver:
+        error_scale: 1.0
+        damped_least_squares:
+            alpha: 0.2  # user-specific handling of singularities
+ 
 joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50
 
 joint_trajectory_controller:
   type: position_controllers/JointTrajectoryController
-  joints: *aria_v2_joints
+  joints: *arm_only
 
   # This is probably required for the real hardware
   # -----------------------------------------------

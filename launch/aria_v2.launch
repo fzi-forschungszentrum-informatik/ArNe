@@ -13,6 +13,7 @@
            " />
         <arg name="controller_stopped_list" default="
             gripper_controller
+            cartesian_controller
              " />
 
 
