@@ -28,6 +28,6 @@ for fname in files:
     with rosbag.Bag('{}/{}.sim'.format(folder, simfile), 'w') as Y:
         for topic, msg, t in Bag(fname):
             if topic == '/state_output':
-                Y.write('/simulation_input', msg, t)
+                Y.write('/replay_input', msg, t)
 
 print("done")

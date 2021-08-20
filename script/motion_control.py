@@ -52,7 +52,7 @@ class MotionSimulator:
         # Input
         self.motion_control = rospy.Subscriber("motion_control_input", Twist, self.motion_control_cb)
         self.gripper_control = rospy.Subscriber("gripper_control_input", Float64, self.gripper_control_cb)
-        self.simulation = rospy.Subscriber("simulation_input", State, self.simulation_cb)
+        self.simulation = rospy.Subscriber("replay_input", State, self.simulation_cb)
 
         # Output
         self.gripper_pub = rospy.Publisher("/joint_states", JointState, queue_size=3)
