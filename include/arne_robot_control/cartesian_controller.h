@@ -10,6 +10,8 @@
  */
 //-----------------------------------------------------------------------------
 
+#include <ros/publisher.h>
+#include <ros/subscriber.h>
 #include <cartesian_motion_controller/cartesian_motion_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <arne_motion_simulator/State.h>
@@ -45,6 +47,7 @@ namespace arne_robot_control
       geometry_msgs::Twist m_control;
       ros::Subscriber m_control_subscriber;
       ros::Subscriber m_replay_subscriber;
+      ros::Publisher m_current_target_publisher;
       void controlCallback(const geometry_msgs::Twist& input);
       void replayCallback(const arne_motion_simulator::State& state);
   };

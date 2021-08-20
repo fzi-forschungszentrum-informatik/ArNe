@@ -11,6 +11,7 @@
 //-----------------------------------------------------------------------------
 
 #include "geometry_msgs/PoseStamped.h"
+#include "ros/time.h"
 #include <arne_robot_control/cartesian_controller.h>
 #include <kdl/frames.hpp>
 #include <pluginlib/class_list_macros.h>
@@ -26,6 +27,7 @@ namespace arne_robot_control
 
     m_control_subscriber = nh.subscribe("control_input", 3, &CartesianController::controlCallback, this);
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
+    m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
 
     return true;
   }
@@ -64,6 +66,19 @@ namespace arne_robot_control
     }
     q.normalize();
     m_target_frame.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
+
+    // Give visual feedback on the current target
+    geometry_msgs::PoseStamped current_target;
+    current_target.header.stamp = ros::Time::now();
+    current_target.header.frame_id = Base::m_robot_base_link;
+    current_target.pose.position.x = m_target_frame.p.x();
+    current_target.pose.position.y = m_target_frame.p.y();
+    current_target.pose.position.z = m_target_frame.p.z();
+    current_target.pose.orientation.x = q.x();
+    current_target.pose.orientation.y = q.y();
+    current_target.pose.orientation.z = q.z();
+    current_target.pose.orientation.w = q.w();
+    m_current_target_publisher.publish(current_target);
 
     // Process m_target_frame as usual
     MotionBase::update(time, period);
