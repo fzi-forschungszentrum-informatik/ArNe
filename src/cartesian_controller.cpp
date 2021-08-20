@@ -25,6 +25,15 @@ namespace arne_robot_control
   {
     Base::init(hw, nh);
 
+    // Connect dynamic reconfigure and overwrite the default values with values
+    // on the parameter server. This is done automatically if parameters with
+    // the according names exist.
+    callback_type_ =
+      std::bind(&CartesianController::dynamicReconfigureCallback, this, std::placeholders::_1, std::placeholders::_2);
+
+    m_reconfig_server = std::make_shared<dynamic_reconfigure::Server<ControlConfig> >(nh);
+    m_reconfig_server->setCallback(callback_type_);
+
     m_control_subscriber = nh.subscribe("control_input", 3, &CartesianController::controlCallback, this);
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
     m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
@@ -34,16 +43,13 @@ namespace arne_robot_control
 
   void CartesianController::update(const ros::Time& time, const ros::Duration& period)
   {
-    // TODO: Make this a dynamic reconfigure parameter?
-    bool end_effector_control = false;
-
     // Quaternion velocity from angular velocity:
     // https://math.stackexchange.com/questions/1792826
     Eigen::Quaterniond q;
     m_target_frame.M.GetQuaternion(q.x(), q.y(), q.z(), q.w());
     Eigen::Quaterniond w(0, m_control.angular.x, m_control.angular.y, m_control.angular.z);
 
-    if (end_effector_control)
+    if (m_local_coordinates)
     {
       // Frames are given w.r.t. the robot base frame, so we need a
       // transformation before integrating in end-effector relative
@@ -82,6 +88,11 @@ namespace arne_robot_control
 
     // Process m_target_frame as usual
     MotionBase::update(time, period);
+  }
+
+  void CartesianController::dynamicReconfigureCallback(ControlConfig& config, uint32_t level)
+  {
+    m_local_coordinates = config.local_coordinates;
   }
 
   void CartesianController::controlCallback(const geometry_msgs::Twist& input)

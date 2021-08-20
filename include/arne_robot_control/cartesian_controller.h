@@ -16,6 +16,8 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <arne_motion_simulator/State.h>
 #include <geometry_msgs/Twist.h>
+#include <dynamic_reconfigure/server.h>
+#include <arne_robot_control/ControlConfig.h>
 
 namespace arne_robot_control
 {
@@ -43,6 +45,12 @@ namespace arne_robot_control
       virtual void update(const ros::Time& time, const ros::Duration& period) override;
 
     private:
+      //! Switch between global and relative coordinates for control
+      void dynamicReconfigureCallback(ControlConfig& config, uint32_t level);
+      std::atomic<bool> m_local_coordinates;
+
+      std::shared_ptr<dynamic_reconfigure::Server<ControlConfig>> m_reconfig_server;
+      dynamic_reconfigure::Server<ControlConfig>::CallbackType callback_type_;
 
       geometry_msgs::Twist m_control;
       ros::Subscriber m_control_subscriber;
