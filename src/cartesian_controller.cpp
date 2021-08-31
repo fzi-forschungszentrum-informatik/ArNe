@@ -46,6 +46,7 @@ namespace arne_robot_control
     // Feedback and replay
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
     m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
+    m_state_publisher = nh.advertise<arne_motion_simulator::State>("state_output", 3);
 
     return true;
   }
@@ -58,6 +59,19 @@ namespace arne_robot_control
 
   void CartesianController::update(const ros::Time& time, const ros::Duration& period)
   {
+    // State feedback for skill recording
+    arne_motion_simulator::State state;
+    state.header.frame_id = Base::m_robot_base_link;
+    state.header.stamp = ros::Time::now();
+    state.gripper.data = m_gripper_state;
+    state.pose.position.x = m_current_frame.p.x();
+    state.pose.position.y = m_current_frame.p.y();
+    state.pose.position.z = m_current_frame.p.z();
+    m_current_frame.M.GetQuaternion(
+        state.pose.orientation.x, state.pose.orientation.y,
+        state.pose.orientation.z, state.pose.orientation.w);
+    m_state_publisher.publish(state);
+
     // Integrate gripper control into abstract state in [0, 1].
     m_gripper_state = m_gripper_state + m_gripper_control * period.toSec();
     m_gripper_state = std::max(0.0, std::min(1.0, m_gripper_state.load()));

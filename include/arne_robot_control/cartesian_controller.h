@@ -44,6 +44,9 @@ namespace arne_robot_control
    * local frame or the robots global base frame.  The switch is done via via
    * dynamic reconfigure.
    *
+   * This controller also publishes the current robot pose and the gripper
+   * position to ROS topic for skill recording.  The publishing frequency is
+   * bound to the controller_manager's update rate.
    */
   class CartesianController : public MotionBase
   {
@@ -79,6 +82,7 @@ namespace arne_robot_control
       // Feedback and Replay
       ros::Subscriber m_replay_subscriber;
       ros::Publisher m_current_target_publisher;
+      ros::Publisher m_state_publisher;
       void replayCallback(const arne_motion_simulator::State& state);
   };
 
