@@ -23,6 +23,7 @@ cartesian_controller:
     end_effector_link: "control"
     robot_base_link: "Link_0"
     joints: *arm_only
+    gripper: Joint_7
 
     pd_gains:
         trans_x: {p: 1.0}
@@ -37,10 +38,6 @@ cartesian_controller:
         damped_least_squares:
             alpha: 0.2  # user-specific handling of singularities
  
-gripper_controller:
-  type: "arne_robot_control/GripperController"
-  gripper: Joint_7
-
 joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50

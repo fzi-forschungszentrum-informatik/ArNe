@@ -13,9 +13,9 @@ button_sleep: 0.5
 button_cmds :
         [
                 # button 0
-                "rostopic pub -r 50 /gripper_controller/gripper_control_input std_msgs/Float64 \"data: 1.0\" __name:=move_gripper",
+                "rostopic pub -r 50 /cartesian_controller/gripper_control_input std_msgs/Float64 \"data: 1.0\" __name:=move_gripper",
                 # button 1
-                "rostopic pub -r 50 /gripper_controller/gripper_control_input std_msgs/Float64 \"data: -1.0\" __name:=move_gripper"
+                "rostopic pub -r 50 /cartesian_controller/gripper_control_input std_msgs/Float64 \"data: -1.0\" __name:=move_gripper"
         ]
 
 # Directories where the commands are executed

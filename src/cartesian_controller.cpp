@@ -10,6 +10,7 @@
  */
 //-----------------------------------------------------------------------------
 
+#include "arne_motion_simulator/State.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "ros/time.h"
 #include <arne_robot_control/cartesian_controller.h>
@@ -34,20 +35,39 @@ namespace arne_robot_control
     m_reconfig_server = std::make_shared<dynamic_reconfigure::Server<ControlConfig> >(nh);
     m_reconfig_server->setCallback(callback_type_);
 
-    m_control_subscriber = nh.subscribe("motion_control_input", 3, &CartesianController::controlCallback, this);
+    // Motion control
+    m_motion_control_subscriber = nh.subscribe("motion_control_input", 3, &CartesianController::motionControlCallback, this);
+
+    // Gripper control
+    m_gripper_control_subscriber = nh.subscribe("gripper_control_input", 3, &CartesianController::gripperControlCallback, this);
+    std::string gripper = nh.param("gripper", std::string("no-gripper-joint-specified"));
+    m_gripper_handle = hw->getHandle(gripper);
+
+    // Feedback and replay
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
     m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
 
     return true;
   }
 
+  void CartesianController::starting(const ros::Time& time)
+  {
+    MotionBase::starting(time);
+    m_gripper_state = m_gripper_handle.getPosition();
+  }
+
   void CartesianController::update(const ros::Time& time, const ros::Duration& period)
   {
+    // Integrate gripper control into abstract state in [0, 1].
+    m_gripper_state = m_gripper_state + m_gripper_control * period.toSec();
+    m_gripper_state = std::max(0.0, std::min(1.0, m_gripper_state.load()));
+    m_gripper_handle.setCommand(m_gripper_state);
+
     // Quaternion velocity from angular velocity:
     // https://math.stackexchange.com/questions/1792826
     Eigen::Quaterniond q;
     m_target_frame.M.GetQuaternion(q.x(), q.y(), q.z(), q.w());
-    Eigen::Quaterniond w(0, m_control.angular.x, m_control.angular.y, m_control.angular.z);
+    Eigen::Quaterniond w(0, m_motion_control.angular.x, m_motion_control.angular.y, m_motion_control.angular.z);
 
     if (m_local_coordinates)
     {
@@ -55,7 +75,7 @@ namespace arne_robot_control
       // transformation before integrating in end-effector relative
       // coordinates.
       auto tmp = m_current_frame.Inverse() * m_target_frame.p;
-      tmp += KDL::Vector(m_control.linear.x, m_control.linear.y, m_control.linear.z) * period.toSec();
+      tmp += KDL::Vector(m_motion_control.linear.x, m_motion_control.linear.y, m_motion_control.linear.z) * period.toSec();
 
       // Transform back
       tmp = m_current_frame * tmp;
@@ -66,7 +86,7 @@ namespace arne_robot_control
     else
     {
       // Base frame relative time integration
-      m_target_frame.p += KDL::Vector(m_control.linear.x, m_control.linear.y, m_control.linear.z) * period.toSec();
+      m_target_frame.p += KDL::Vector(m_motion_control.linear.x, m_motion_control.linear.y, m_motion_control.linear.z) * period.toSec();
 
       q.coeffs() += 0.5 * (w * q).coeffs() * period.toSec();
     }
@@ -95,13 +115,20 @@ namespace arne_robot_control
     m_local_coordinates = config.local_coordinates;
   }
 
-  void CartesianController::controlCallback(const geometry_msgs::Twist& input)
+  void CartesianController::motionControlCallback(const geometry_msgs::Twist& input)
   {
-    m_control = input;
+    m_motion_control = input;
+  }
+
+  void CartesianController::gripperControlCallback(const std_msgs::Float64& input)
+  {
+    m_gripper_control = input.data;
   }
 
   void CartesianController::replayCallback(const arne_motion_simulator::State& state)
   {
+    m_gripper_state = state.gripper.data;
+
     geometry_msgs::PoseStamped p;
     p.header = state.header;
     p.pose = state.pose;
