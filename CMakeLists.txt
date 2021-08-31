@@ -205,7 +205,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
-  cartesian_controller_plugin.xml
+  ${PROJECT_NAME}_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

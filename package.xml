@@ -62,6 +62,7 @@
   <build_export_depend>arne_motion_simulator</build_export_depend>
   <build_export_depend>cartesian_controller_base</build_export_depend>
   <build_export_depend>cartesian_motion_controller</build_export_depend>
+  <build_export_depend>dynamic_reconfigure</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>hardware_interface</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
