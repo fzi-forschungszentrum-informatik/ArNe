@@ -30,24 +30,15 @@ namespace arne_robot_control
     public:
       GripperHandle() = delete;
 
-      GripperHandle(const std::string& name, const double* pos)
-        : m_name(name), m_pos(pos)
+      GripperHandle(const std::string& name, const double* pos, double* cmd)
+        : m_name(name), m_pos(pos), m_cmd(cmd)
       {
-        if (!pos)
+        if (!pos || !cmd)
         {
           throw hardware_interface::HardwareInterfaceException(
-              "Cannot create handle '" + name + "'. Position data pointer is null.");
+              "Cannot create handle '" + name + "'. Position | Command data pointer is null.");
         }
       }
-
-      GripperHandle(const GripperHandle& gh, double* cmd)
-      {
-        if (!m_cmd)
-        {
-          throw hardware_interface::HardwareInterfaceException(
-              "Cannot create handle '" + gh.getName() + "'. Command data pointer is null.");
-        }
-      };
 
       std::string getName() const {return m_name;}
       double getPosition()  const {assert(m_pos); return *m_pos;}
