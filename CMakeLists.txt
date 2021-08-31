@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   hardware_interface
   rospy
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,7 +110,9 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cartesian_controller
+  LIBRARIES
+    cartesian_controller
+    gripper_controller
   CATKIN_DEPENDS
     arne_motion_simulator
     cartesian_controller_base
@@ -118,6 +121,7 @@ catkin_package(
     geometry_msgs
     hardware_interface
     rospy
+    std_msgs
 #  DEPENDS system_lib
 )
 
@@ -136,6 +140,9 @@ include_directories(
 ## Declare a C++ library
 add_library(cartesian_controller
   src/cartesian_controller.cpp
+)
+add_library(gripper_controller
+  src/gripper_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -163,6 +170,9 @@ target_link_libraries(cartesian_controller
   ${catkin_LIBRARIES}
   Eigen3::Eigen
 )
+target_link_libraries(gripper_controller
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -186,7 +196,9 @@ target_link_libraries(cartesian_controller
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS cartesian_controller
+install(TARGETS
+  cartesian_controller
+  gripper_controller
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

@@ -1,0 +1,11 @@
+<library path="lib/libgripper_controller">
+
+  <class name="arne_robot_control/GripperController"
+         type="arne_robot_control::GripperController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+        ROS-controller for commanding grippers in the ArNe project
+    </description>
+  </class>
+
+</library>

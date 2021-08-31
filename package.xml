@@ -57,6 +57,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
 
   <build_export_depend>arne_motion_simulator</build_export_depend>
   <build_export_depend>cartesian_controller_base</build_export_depend>
@@ -64,6 +65,7 @@
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>hardware_interface</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
 
   <exec_depend>arne_motion_simulator</exec_depend>
   <exec_depend>cartesian_controller_base</exec_depend>
@@ -72,6 +74,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>hardware_interface</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
   <!-- This is important for the export to work -->
   <exec_depend>controller_interface</exec_depend>
@@ -84,5 +87,6 @@
     rospack plugins - -attrib=plugin controller_interface
     -->
     <controller_interface plugin="${prefix}/cartesian_controller_plugin.xml"/>
+    <controller_interface plugin="${prefix}/gripper_controller_plugin.xml"/>
   </export>
 </package>
