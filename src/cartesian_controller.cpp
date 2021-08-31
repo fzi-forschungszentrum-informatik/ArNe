@@ -34,7 +34,7 @@ namespace arne_robot_control
     m_reconfig_server = std::make_shared<dynamic_reconfigure::Server<ControlConfig> >(nh);
     m_reconfig_server->setCallback(callback_type_);
 
-    m_control_subscriber = nh.subscribe("control_input", 3, &CartesianController::controlCallback, this);
+    m_control_subscriber = nh.subscribe("motion_control_input", 3, &CartesianController::controlCallback, this);
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
     m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
 
