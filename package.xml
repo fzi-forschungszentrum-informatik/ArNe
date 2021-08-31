@@ -86,7 +86,6 @@
     To check if the export was successful, use
     rospack plugins - -attrib=plugin controller_interface
     -->
-    <controller_interface plugin="${prefix}/cartesian_controller_plugin.xml"/>
-    <controller_interface plugin="${prefix}/gripper_controller_plugin.xml"/>
+    <controller_interface plugin="${prefix}/arne_robot_control_plugins.xml"/>
   </export>
 </package>

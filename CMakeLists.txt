@@ -111,8 +111,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES
-    cartesian_controller
-    gripper_controller
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     arne_motion_simulator
     cartesian_controller_base
@@ -138,10 +137,8 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(cartesian_controller
+add_library(${PROJECT_NAME}
   src/cartesian_controller.cpp
-)
-add_library(gripper_controller
   src/gripper_controller.cpp
 )
 
@@ -166,12 +163,9 @@ add_library(gripper_controller
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(cartesian_controller
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   Eigen3::Eigen
-)
-target_link_libraries(gripper_controller
-  ${catkin_LIBRARIES}
 )
 
 #############
@@ -197,8 +191,7 @@ target_link_libraries(gripper_controller
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
 install(TARGETS
-  cartesian_controller
-  gripper_controller
+  ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

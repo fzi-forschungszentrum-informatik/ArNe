@@ -1,0 +1,19 @@
+<library path="lib/libarne_robot_control">
+
+  <class name="arne_robot_control/CartesianController"
+         type="arne_robot_control::CartesianController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+        ROS-controller for direct servoing and skill replay in the ArNe project.
+    </description>
+  </class>
+
+  <class name="arne_robot_control/GripperController"
+         type="arne_robot_control::GripperController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+        ROS-controller for commanding grippers in the ArNe project
+    </description>
+  </class>
+
+</library>
