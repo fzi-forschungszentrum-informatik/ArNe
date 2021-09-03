@@ -101,7 +101,7 @@ def read_rosbag(bagfile):
 def write_rosbag(trajectory, filename):
     """ Write the given trajectory into a rosbag file
 
-    This produces a state-only trajectory with the ROS topic /simulation_input.
+    This produces a state-only trajectory with the ROS topic /replay_input.
     Replay this rosbag for the arne_motion_simulator with
 
     rosbag play <bagfile>
@@ -119,7 +119,7 @@ def write_rosbag(trajectory, filename):
             msg.pose.orientation.w = state[6]
             msg.gripper.data = state[7]
 
-            bag.write('/simulation_input', msg, Duration(t))
+            bag.write('/replay_input', msg, Duration(t))
 
 
 def diff(states, h):
