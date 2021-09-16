@@ -47,7 +47,7 @@ class RosbagRecorder(object):
 
         self.recording = True  # Activate callback
         if wait_for_data:
-            while not any(self.msg_buffer.itervalues()):
+            while not any(self.msg_buffer.values()):
                 time.sleep(0.001)
                 rospy.loginfo_throttle(1, 'RosbagRecorder: Waiting for data ...')
 
