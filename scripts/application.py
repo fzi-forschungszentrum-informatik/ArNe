@@ -14,6 +14,12 @@ from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory
 class Application(object):
     """ High-level program logic for the ArNe platform
 
+    This node's primary purpose is to handle operations with macros, such as
+    recording and replaying them when triggered by the GUI.  Note that there is
+    a direct, topic-based connection of the GUI to the robot's Cartesian
+    controller for streaming-based control of motion and gripper. There is no
+    need here to interpolate and plausibility-check those commands, which is
+    done by the controller itself.
     """
     def __init__(self):
 
@@ -42,8 +48,14 @@ class Application(object):
         robot (and gripper) motion is recorded to a .bag file on disk.  This
         .bag file is then parsed into a trajectory, from which a characteristic
         profile is generalized (=skill) and saved to disk with the .dmp
-        extension.
+        extension. Both files are named according to the hash id of the macro
+        with the respective extension.
 
+        Macros are played with publishing to the specified replay topic of the
+        controller.  Note that repeatedly starting playbacks is supported. The
+        new callback will just preempt the old one. Macros always start from
+        the current robot state. Playbacks can be paused/unpaused and stopped.
+        A stopped playback cannot be resumed.
         """
         # Colored output for macro operations
         NORMAL = '\033[0m'
@@ -52,12 +64,18 @@ class Application(object):
         RED = '\033[1;31m'
         YELLOW = '\033[1;33m'
 
+        #--------------------------------------------------------------------------------
+        # Start recording
+        #--------------------------------------------------------------------------------
         # Start recording robot motion into internal buffers.
         # Do nothing on repeated calls.
         if req.mode is MacroRequest.START_RECORDING:
             if self.macro_recorder.start_recording(wait_for_data=True):
                 rospy.loginfo(f"{CYAN}START{NORMAL} macro recording")
 
+        #--------------------------------------------------------------------------------
+        # Stop recording
+        #--------------------------------------------------------------------------------
         # Stop any active recording and save buffers to a .bag file.
         # If that was successful, generalize the .bag file into a macro and
         # save it with .dmp extension into the same directory.
@@ -72,6 +90,9 @@ class Application(object):
                     macro.save_profile('{}/{}.dmp'.format(self.macro_folder, req.id))
                     rospy.loginfo(f"{RED}STOP{NORMAL} macro recording")
 
+        #--------------------------------------------------------------------------------
+        # Start playback
+        #--------------------------------------------------------------------------------
         # Start playback of the selected macro if that exists.
         # Macros always start from the current robot state and terminate in the
         # last state of the recording.
@@ -88,12 +109,16 @@ class Application(object):
             else:
                 return MacroResponse(False, "Macro {} not found.".format(req.id))
 
-        # Stop playback.
+        #--------------------------------------------------------------------------------
+        # Stop playback
+        #--------------------------------------------------------------------------------
         elif req.mode is MacroRequest.STOP_PLAYBACK:
             self.macro_player.stop()
             rospy.loginfo(f"{RED}STOP{NORMAL} macro playback")
 
-        # Pause/unpause playback.
+        #--------------------------------------------------------------------------------
+        # Pause/Unpause playback
+        #--------------------------------------------------------------------------------
         # TODO: What happens when users move the robot with direct control
         # during pause?  Jumps might occur.
         elif req.mode is MacroRequest.TOGGLE_PLAYBACK:
