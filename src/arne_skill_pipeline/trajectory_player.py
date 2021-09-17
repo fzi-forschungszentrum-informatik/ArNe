@@ -23,6 +23,7 @@ class TrajectoryPlayer(object):
         """
         self.pub = publisher
         self.paused = False
+        self.stopped = True
 
     def _publish(self, trajectory):
         """ Publish the trajectory as discrete State topics to ROS
@@ -35,7 +36,7 @@ class TrajectoryPlayer(object):
         idx = 0
 
         def finished():
-            return idx >= trajectory.nr_points
+            return idx >= trajectory.nr_points or self.stopped
 
         def _do_publish(event):
             nonlocal idx
@@ -79,6 +80,7 @@ class TrajectoryPlayer(object):
         self.stop()
 
         # Start publishing in a separate thread
+        self.stopped = False
         self.play_thread = threading.Thread(target=self._publish, args=(trajectory, ), daemon=True)
         self.play_thread.start()
         return self.play_thread.is_alive()
@@ -94,7 +96,8 @@ class TrajectoryPlayer(object):
         """ Stop trajectory replay
 
         """
-        if hasattr(self, 'self.play_thread'):
+        if hasattr(self, 'play_thread'):
+            self.stopped = True
             self.play_thread.join()
             return not self.play_thread.is_alive()
         else:
