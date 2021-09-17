@@ -75,14 +75,14 @@ class Trajectory(object):
         return s
 
 
-def read_rosbag(bagfile):
+def read_rosbag(bagfile, state_topic='/state_output'):
     """ Read states from a rosbag file """
     states = []
     time = []
     with Bag(bagfile) as bag:
         start = bag.get_start_time()
         for topic, msg, t in bag:
-            if topic == '/state_output':
+            if topic == state_topic:
                 states.append([
                     msg.pose.position.x,
                     msg.pose.position.y,

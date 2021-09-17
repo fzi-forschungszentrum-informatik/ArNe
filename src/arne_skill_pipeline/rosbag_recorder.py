@@ -50,6 +50,7 @@ class RosbagRecorder(object):
             while not any(self.msg_buffer.values()):
                 time.sleep(0.001)
                 rospy.loginfo_throttle(1, 'RosbagRecorder: Waiting for data ...')
+        return True
 
     def stop_recording(self, folder, prefix="", stamped=False):
         """ Stop the recording process
@@ -72,3 +73,4 @@ class RosbagRecorder(object):
                 for msg, stamp in data:
                     bag.write(topic_name, msg, stamp)
                 self.msg_buffer[topic_name] = []  # reset buffer
+        return True
