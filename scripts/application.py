@@ -21,10 +21,13 @@ class Application(object):
         rospy.init_node('arne_application')
         self.macro_folder = '{}/.ros/recorded_macros'.format(os.path.expanduser('~'))
         self.state_topic = 'cartesian_controller/state_output'
+        self.state_subscriber = rospy.Subscriber(self.state_topic, State, self.state_callback)
 
         # Macro functionality
+        self.replay_publisher = rospy.Publisher('cartesian_controller/replay_input', State, queue_size=10)
         self.macro_server = rospy.Service('~macro_mode', Macro, self.macro_mode)
         self.macro_recorder = RosbagRecorder({self.state_topic: State})
+        self.macro_player = TrajectoryPlayer(self.replay_publisher)
 
         rospy.loginfo("ArNe application ready.")
 
@@ -69,20 +72,54 @@ class Application(object):
                     macro.save_profile('{}/{}.dmp'.format(self.macro_folder, req.id))
                     rospy.loginfo(f"{RED}STOP{NORMAL} macro recording")
 
+        # Start playback of the selected macro if that exists.
+        # Macros always start from the current robot state and terminate in the
+        # last state of the recording.
         elif req.mode is MacroRequest.START_PLAYBACK:
-            rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
+            macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
+            bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
+            if Path(macrofile).is_file() and Path(bagfile).is_file():
+                macro = Skill()
+                macro.load_profile(macrofile)
+                _, states = read_rosbag(bagfile, state_topic=self.state_topic)
+                trajectory = macro.generate_new_trajectory(self.state, states[-1], req.duration)
+                self.macro_player.play(trajectory)
+                rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
+            else:
+                return MacroResponse(False, "Macro {} not found.".format(req.id))
 
+        # Stop playback.
         elif req.mode is MacroRequest.STOP_PLAYBACK:
+            self.macro_player.stop()
             rospy.loginfo(f"{RED}STOP{NORMAL} macro playback")
 
+        # Pause/unpause playback.
+        # TODO: What happens when users move the robot with direct control
+        # during pause?  Jumps might occur.
         elif req.mode is MacroRequest.TOGGLE_PLAYBACK:
+            self.macro_player.toggle_pause()
             rospy.loginfo(f"{YELLOW}TOGGLE{NORMAL} macro playback")
 
+        # Unknown mode
         else:
             rospy.loginfo("Unsupported macro mode")
             return MacroResponse(False, "Unsupported macro mode.")
 
         return MacroResponse(True, "Success.")
+
+    def state_callback(self, state):
+        """ Keep track of the robot's current state
+        """
+        self.state = [
+            state.pose.position.x,
+            state.pose.position.y,
+            state.pose.position.z,
+            state.pose.orientation.x,
+            state.pose.orientation.y,
+            state.pose.orientation.z,
+            state.pose.orientation.w,
+            state.gripper.data
+            ]
 
     def __enter__(self):
         return self
