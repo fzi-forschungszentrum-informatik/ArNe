@@ -142,9 +142,12 @@ namespace arne_robot_control
   void CartesianController::replayCallback(const arne_motion_simulator::State& state)
   {
     m_gripper_state = state.gripper.data;
-
     geometry_msgs::PoseStamped p;
-    p.header = state.header;
+
+    // State feedback during recording is always given in robot base frame.
+    // Generalizing skills from this recording does not change this, so it's
+    // safe to always set this frame here for control.
+    p.header.frame_id = Base::m_robot_base_link;
     p.pose = state.pose;
     MotionBase::targetFrameCallback(p);
   }
