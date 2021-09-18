@@ -1,6 +1,7 @@
 import rospy
 from arne_motion_simulator.msg import State
 import threading
+import quaternion
 
 
 class TrajectoryPlayer(object):
@@ -45,10 +46,20 @@ class TrajectoryPlayer(object):
                 msg.pose.position.x = trajectory.states[idx][0]
                 msg.pose.position.y = trajectory.states[idx][1]
                 msg.pose.position.z = trajectory.states[idx][2]
-                msg.pose.orientation.x = trajectory.states[idx][3]
-                msg.pose.orientation.y = trajectory.states[idx][4]
-                msg.pose.orientation.z = trajectory.states[idx][5]
-                msg.pose.orientation.w = trajectory.states[idx][6]
+
+                # There's no plausibility check on the skill's generalized trajectory,
+                # so normalization is required here for the orientation quaternion.
+                q = quaternion.quaternion(
+                        trajectory.states[idx][6], # w
+                        trajectory.states[idx][3], # x
+                        trajectory.states[idx][4], # y
+                        trajectory.states[idx][5], # z
+                    ).normalized()
+                msg.pose.orientation.x = q.x
+                msg.pose.orientation.y = q.y
+                msg.pose.orientation.z = q.z
+                msg.pose.orientation.w = q.w
+
                 msg.gripper.data = trajectory.states[idx][7]
                 self.pub.publish(msg)
                 idx += 1
