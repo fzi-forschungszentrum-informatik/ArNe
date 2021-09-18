@@ -76,7 +76,6 @@ class TrajectoryPlayer(object):
         - Continuously publish to Ros topics in a separate thread
         """
         # Preempt any playing trajectory.
-        # This is a no-op in case nothing is playing.
         self.stop()
 
         # Start publishing in a separate thread
@@ -98,6 +97,7 @@ class TrajectoryPlayer(object):
         """
         if hasattr(self, 'play_thread'):
             self.stopped = True
+            self.paused = False
             self.play_thread.join()
             return not self.play_thread.is_alive()
         else:
