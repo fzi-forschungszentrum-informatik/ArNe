@@ -2,7 +2,7 @@
 <package format="2">
   <name>arne_skill_pipeline</name>
   <version>0.0.0</version>
-  <description>The arne_skill_pipeline package</description>
+  <description>Methods and algorithms for skill learning in the ArNe project</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -51,8 +51,13 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>rospy</exec_depend>
 
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>arne_motion_simulator</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
