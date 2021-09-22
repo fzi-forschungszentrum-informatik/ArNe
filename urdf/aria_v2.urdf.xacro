@@ -11,4 +11,12 @@
     <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>
 
+  <!-- This is the link for direct control and skill replay -->
+  <link name="control" />
+  <joint name="control_joint" type="fixed">
+    <parent link="eef_link" />
+    <child link="control" />
+    <origin xyz="0 0 0" rpy="0 ${pi/2} ${pi/2}" />
+  </joint>
+
 </robot>
