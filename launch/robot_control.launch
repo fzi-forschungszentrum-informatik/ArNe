@@ -9,10 +9,10 @@
 
         <arg name="controller_running_list" default="
             joint_state_controller
-            joint_trajectory_controller
+            cartesian_controller
            " />
         <arg name="controller_stopped_list" default="
-            cartesian_controller
+            joint_trajectory_controller
              " />
 
 
