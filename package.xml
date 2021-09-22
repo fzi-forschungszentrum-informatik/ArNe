@@ -2,7 +2,7 @@
 <package format="2">
   <name>arne_motion_simulator</name>
   <version>0.0.0</version>
-  <description>The arne_motion_simulator package</description>
+  <description>A lightweight simulation dummy for GUI development</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -55,7 +55,12 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>rosbridge_server</build_depend>
+
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>dynamic_reconfigure</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
 
   <exec_depend>rospy</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
@@ -63,7 +68,11 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
-  <exec_depend>numpy-quaternion</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>spacenav_node</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

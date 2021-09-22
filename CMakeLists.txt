@@ -8,13 +8,13 @@ project(arne_motion_simulator)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  rospy
   dynamic_reconfigure
   geometry_msgs
-  std_msgs
-  sensor_msgs
   message_generation
   rosbridge_server
+  rospy
+  sensor_msgs
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -73,8 +73,8 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs
   geometry_msgs
+  std_msgs
 )
 
 ################################################
@@ -109,11 +109,11 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES arne_motion_simulator
   CATKIN_DEPENDS
-  rospy
   dynamic_reconfigure
-  message_runtime
-  std_msgs
   geometry_msgs
+  message_runtime
+  rospy
+  std_msgs
 #  DEPENDS system_lib
 )
 
@@ -167,10 +167,11 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  script/convert_rosbags.py
+  script/motion_control.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
