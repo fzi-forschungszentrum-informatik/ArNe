@@ -20,6 +20,13 @@ class Application(object):
     controller for streaming-based control of motion and gripper. There is no
     need here to interpolate and plausibility-check those commands, which is
     done by the controller itself.
+
+    Details on macros:
+    Global macros will converge to the end position that the robot had in the
+    environment during macro recording. A possible application is throwing
+    things from a table top into a trash bin.
+    Local macros will move entirely local to the current robot position.
+    A possible application is scratching an itchy spot on the forearm.
     """
     def __init__(self):
 
@@ -109,8 +116,7 @@ class Application(object):
         # Start playback
         #--------------------------------------------------------------------------------
         # Start playback of the selected macro if that exists.
-        # Macros always start from the current robot state and terminate in the
-        # last state of the recording.
+        # Macros always start from the current robot state.
         elif req.mode is MacroRequest.START_PLAYBACK:
             macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
@@ -118,22 +124,28 @@ class Application(object):
                 macro = Skill()
                 macro.load_profile(macrofile)
 
-                _, states = read_rosbag(bagfile, state_topic=self.state_topic)
+                _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
                 start = [0, 0, 0, 0, 0, 0, 1, self.state[7]]
-                now = self.state
 
-                # TODO: Case-based distinction by macro type (global vs local).
-                # Depending on that type, we need a different handling of the recorded goal.
+                # Global macros drive to the globally recorded goal and need to
+                # map that into our current coordinate system for skill
+                # generation.  Local macros replicate the motion pattern in
+                # their local coordinate system.
+                if req.type is MacroRequest.GLOBAL_MACRO:
+                    goal = transform_state(recorded_states[-1], transform=self.state, use_inverse=True)
 
-                # Map the goal state of the recording into the skill-local coordinate system.
-                goal = transform_state(states[-1], transform=now, use_inverse=True)
+                elif req.type is MacroRequest.LOCAL_MACRO:
+                    goal = transform_state(recorded_states[-1], transform=recorded_states[0], use_inverse=True)
+
+                else:
+                    return MacroResponse(False, "Unknown macro type {}.".format(req.type))
 
                 # Compute how to move from the robot's current pose to the goal
                 # pose while keeping the macro's motion profile.
                 trajectory = macro.generate_new_trajectory(start, goal, req.duration)
 
                 # Display the states back in the robot's base frame for control.
-                transform_states(trajectory.states, transform=now)
+                transform_states(trajectory.states, transform=self.state)
 
                 self.macro_player.play(trajectory)
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
