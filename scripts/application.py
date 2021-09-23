@@ -8,7 +8,7 @@ from arne_motion_simulator.msg import State
 from arne_skill_pipeline.skill import Skill
 from arne_skill_pipeline.rosbag_recorder import RosbagRecorder
 from arne_skill_pipeline.trajectory_player import TrajectoryPlayer
-from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory
+from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory, transform_state, transform_states
 
 
 class Application(object):
@@ -20,6 +20,13 @@ class Application(object):
     controller for streaming-based control of motion and gripper. There is no
     need here to interpolate and plausibility-check those commands, which is
     done by the controller itself.
+
+    Details on macros:
+    Global macros will converge to the end position that the robot had in the
+    environment during macro recording. A possible application is throwing
+    things from a table top into a trash bin.
+    Local macros will move entirely local to the current robot position.
+    A possible application is scratching an itchy spot on the forearm.
     """
     def __init__(self):
 
@@ -56,6 +63,14 @@ class Application(object):
         new callback will just preempt the old one. Macros always start from
         the current robot state. Playbacks can be paused/unpaused and stopped.
         A stopped playback cannot be resumed.
+
+        Note the different, implicit coordinate systems of both data files:
+        The .bag file holds the robot state with respect to the robot's base
+        frame, whereas the data in the .dmp file are with respect to the
+        robot's pose when recording started. Transformations between both
+        frames assure that macros are generalized in a coordinate
+        system-independent manner, and that robot control get's its reference
+        motion in the expected base frame for replay.
         """
         # Colored output for macro operations
         NORMAL = '\033[0m'
@@ -84,6 +99,13 @@ class Application(object):
                 bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
                 if Path(bagfile).is_file():
                     times, states = read_rosbag(bagfile, state_topic=self.state_topic)
+
+                    # Display all recorded states with respect to the robot's
+                    # end-effector frame when recording started.  This is
+                    # important for coordinate system-independent skill
+                    # generalization.
+                    transform_states(states, transform=states[0], use_inverse=True)
+
                     trajectory = compute_trajectory(times, states)
                     macro = Skill()
                     macro.learn_trajectory(trajectory)
@@ -94,16 +116,37 @@ class Application(object):
         # Start playback
         #--------------------------------------------------------------------------------
         # Start playback of the selected macro if that exists.
-        # Macros always start from the current robot state and terminate in the
-        # last state of the recording.
+        # Macros always start from the current robot state.
         elif req.mode is MacroRequest.START_PLAYBACK:
             macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
             if Path(macrofile).is_file() and Path(bagfile).is_file():
                 macro = Skill()
                 macro.load_profile(macrofile)
-                _, states = read_rosbag(bagfile, state_topic=self.state_topic)
-                trajectory = macro.generate_new_trajectory(self.state, states[-1], req.duration)
+
+                _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
+                start = [0, 0, 0, 0, 0, 0, 1, self.state[7]]
+
+                # Global macros drive to the globally recorded goal and need to
+                # map that into our current coordinate system for skill
+                # generation.  Local macros replicate the motion pattern in
+                # their local coordinate system.
+                if req.type is MacroRequest.GLOBAL_MACRO:
+                    goal = transform_state(recorded_states[-1], transform=self.state, use_inverse=True)
+
+                elif req.type is MacroRequest.LOCAL_MACRO:
+                    goal = transform_state(recorded_states[-1], transform=recorded_states[0], use_inverse=True)
+
+                else:
+                    return MacroResponse(False, "Unknown macro type {}.".format(req.type))
+
+                # Compute how to move from the robot's current pose to the goal
+                # pose while keeping the macro's motion profile.
+                trajectory = macro.generate_new_trajectory(start, goal, req.duration)
+
+                # Display the states back in the robot's base frame for control.
+                transform_states(trajectory.states, transform=self.state)
+
                 self.macro_player.play(trajectory)
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
             else:
