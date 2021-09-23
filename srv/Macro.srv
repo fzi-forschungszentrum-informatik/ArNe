@@ -12,6 +12,7 @@ uint8 STOP_RECORDING = 1
 uint8 START_PLAYBACK = 2
 uint8 STOP_PLAYBACK = 3
 uint8 TOGGLE_PLAYBACK = 4
+uint8 DELETE_MACRO = 5
 
 # Semantic type of the macro.
 uint8 type

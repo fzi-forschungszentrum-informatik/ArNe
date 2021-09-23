@@ -168,6 +168,18 @@ class Application(object):
             self.macro_player.toggle_pause()
             rospy.loginfo(f"{YELLOW}TOGGLE{NORMAL} macro playback")
 
+        #--------------------------------------------------------------------------------
+        # Delete macro
+        #--------------------------------------------------------------------------------
+        elif req.mode is MacroRequest.DELETE_MACRO:
+            macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
+            bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
+            try:
+                os.remove(macrofile)
+                os.remove(bagfile)
+            except OSError:
+                pass
+
         # Unknown mode
         else:
             rospy.loginfo("Unsupported macro mode")
