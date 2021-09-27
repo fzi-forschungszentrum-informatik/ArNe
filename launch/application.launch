@@ -1,0 +1,17 @@
+<launch>
+
+        <!-- High-level program logic for macro management -->
+        <node name="arne_application" pkg="arne_application" type="application.py" respawn="true" output="screen"/>
+
+        <!-- Robot control for both simulation and real hardware -->
+        <include file="$(find arne_robot_control)/launch/robot_control.launch">
+                <arg name="sim" value="true"/>
+                <arg name="arm_type" value="aria_v2"/>
+        </include>
+
+        <!-- ROS bridge server for GUI communication -->
+        <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+                <arg name="port" value="9090"/>
+        </include>
+
+</launch>
