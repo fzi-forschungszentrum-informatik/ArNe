@@ -4,7 +4,7 @@
         <node pkg="spacenav_node" type="spacenav_node" name="spacenav_node" output="screen">
                 <param name="zero_when_static" value="true"/>
                 <param name="static_count_threshold" value="30"/>
-                <rosparam param="linear_scale">[0.5,0.5,0.5]</rosparam>
+                <rosparam param="linear_scale">[0.3,0.3,0.3]</rosparam>
                 <rosparam param="angular_scale">[1,1,1]</rosparam>
         </node>
 
