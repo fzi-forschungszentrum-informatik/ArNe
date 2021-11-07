@@ -16,7 +16,7 @@ and get the relevant ROS packages
 git clone -b master git@ids-git.fzi.de:project-groups/arne/arne_application.git
 git clone -b master git@ids-git.fzi.de:project-groups/arne/arne_motion_simulator.git
 git clone -b master git@ids-git.fzi.de:project-groups/arne/arne_robot_control.git
-git clone -b devel git@ids-git.fzi.de:project-groups/arne/arne_skill_pipeline.git
+git clone -b master git@ids-git.fzi.de:project-groups/arne/arne_skill_pipeline.git
 git clone -b master git@github.com:fzi-forschungszentrum-informatik/cartesian_controllers.git
 git clone -b devel git@github.com:stefanscherzinger/aria-ros.git
 rosdep install --ignore-src --from-paths ./ -y -r
