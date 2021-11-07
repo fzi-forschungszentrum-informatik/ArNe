@@ -2,13 +2,15 @@
 
 import os
 import rospy
+import numpy as np
+import transformations as tr
 from pathlib import Path
 from arne_application.srv import Macro, MacroRequest, MacroResponse
 from arne_motion_simulator.msg import State
 from arne_skill_pipeline.skill import Skill
 from arne_skill_pipeline.rosbag_recorder import RosbagRecorder
 from arne_skill_pipeline.trajectory_player import TrajectoryPlayer
-from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory, transform_state, transform_states
+from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory, transform_state, transform_states, homogeneous
 
 
 class Application(object):
@@ -22,11 +24,15 @@ class Application(object):
     done by the controller itself.
 
     Details on macros:
-    Global macros will converge to the end position that the robot had in the
-    environment during macro recording. A possible application is throwing
-    things from a table top into a trash bin.
-    Local macros will move entirely local to the current robot position.
-    A possible application is scratching an itchy spot on the forearm.
+    Global macros will converge to the end pose that the robot had in the
+    environment during macro recording. A use case is repetitive manipulation
+    from slightly different starts.
+    Local macros will move entirely local to the current robot position.  A
+    possible application is scratching an itchy spot on the forearm or opening
+    a door handle.
+    Hybrid macros converge to the end position of macro recording but do not
+    enforce the final orientation.  It's suitable for Use cases when
+    orientation doesn't matter, such as throwing things into a trash bin.
     """
     def __init__(self):
 
@@ -104,7 +110,7 @@ class Application(object):
                     # end-effector frame when recording started.  This is
                     # important for coordinate system-independent skill
                     # generalization.
-                    transform_states(states, transform=states[0], use_inverse=True)
+                    transform_states(states, transform=tr.inverse_matrix(homogeneous(states[0])))
 
                     trajectory = compute_trajectory(times, states)
                     macro = Skill()
@@ -125,27 +131,54 @@ class Application(object):
                 macro.load_profile(macrofile)
 
                 _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
-                start = [0, 0, 0, 0, 0, 0, 1, self.state[7]]
+                start = [0, 0, 0, 0, 0, 0, 1, self.state[7]] # identity
 
                 # Global macros drive to the globally recorded goal and need to
-                # map that into our current coordinate system for skill
-                # generation.  Local macros replicate the motion pattern in
-                # their local coordinate system.
+                # map that into our current end-effector coordinate system for
+                # skill generation.
                 if req.type is MacroRequest.GLOBAL_MACRO:
-                    goal = transform_state(recorded_states[-1], transform=self.state, use_inverse=True)
+                    goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
 
+                # Local macros replicate the motion pattern in their local
+                # coordinate system and apply it in our current end-effector
+                # coordinate system.
                 elif req.type is MacroRequest.LOCAL_MACRO:
-                    goal = transform_state(recorded_states[-1], transform=recorded_states[0], use_inverse=True)
+                    goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+
+                # Hybrid macros drive to the globally recorded position but
+                # keep their local orientation.
+                elif req.type is MacroRequest.HYBRID_MACRO:
+                    global_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
+                    local_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+                    scale = np.linalg.norm(global_goal[:3]) / np.linalg.norm(local_goal[:3])
+                    goal = [scale * i for i in local_goal[:3]] + local_goal[3:]
 
                 else:
                     return MacroResponse(False, "Unknown macro type {}.".format(req.type))
 
-                # Compute how to move from the robot's current pose to the goal
-                # pose while keeping the macro's motion profile.
+                # Compute how to move to the goal pose while keeping the
+                # macro's motion profile.
                 trajectory = macro.generate_new_trajectory(start, goal, req.duration)
 
+                # Hybrid macros need an additional step to adequately display
+                # the generated profile in the current end-effector frame.
+                # See the documentation for details.
+                if req.type is MacroRequest.HYBRID_MACRO:
+
+                    T1 = tr.inverse_matrix(homogeneous(local_goal))
+                    p1 = tr.translation_from_matrix(T1)
+                    T2 = tr.inverse_matrix(homogeneous(global_goal))
+                    p2 = tr.translation_from_matrix(T2)
+
+                    angle = tr.angle_between_vectors(p1, p2)
+                    axis = tr.vector_product(p1, p2)
+                    T_hybrid = tr.rotation_matrix(angle, axis)
+                    T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
+                    R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
+                    transform_states(trajectory.states, transform=R, position_only=True)
+
                 # Display the states back in the robot's base frame for control.
-                transform_states(trajectory.states, transform=self.state)
+                transform_states(trajectory.states, transform=homogeneous(self.state))
 
                 self.macro_player.play(trajectory)
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
