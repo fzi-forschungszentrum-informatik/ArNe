@@ -13,22 +13,23 @@ uint8 START_PLAYBACK = 2
 uint8 STOP_PLAYBACK = 3
 uint8 TOGGLE_PLAYBACK = 4
 uint8 DELETE_MACRO = 5
+uint8 SHOW_PLAYBACK = 6
 
 # Semantic type of the macro.
 uint8 type
 
 # Supported semantic types:
-# 0 : Global macros will converge to the end pose that the robot had in the
-#     environment during macro recording.
-# 1 : Local macros will move entirely local to the current robot position.
-#     A possible application is scratching an itchy spot on the forearm.
-# 2 : Hybrid macros converge to the globally recorded goal position but use
+# 0 : Hybrid macros converge to the globally recorded goal position but use
 #     the local orientation. This is useful when only the position is relevant
 #     and the orientation would distort the motion too much.
 #     A possible application is throwing things from a table top into a trash bin.
-uint8 GLOBAL_MACRO = 0
+# 1 : Local macros will move entirely local to the current robot position.
+#     A possible application is scratching an itchy spot on the forearm.
+# 2 : Global macros will converge to the absolute end pose that the robot had in the
+#     environment during macro recording.
+uint8 HYBRID_MACRO = 0
 uint8 LOCAL_MACRO = 1
-uint8 HYBRID_MACRO = 2
+uint8 GLOBAL_MACRO = 2
 
 # Positive, non-zero desired duration of the playback in seconds.
 float64 duration
