@@ -243,7 +243,7 @@ class Application(object):
 
             angle = tr.angle_between_vectors(p1, p2)
             axis = tr.vector_product(p1, p2)
-            T_hybrid = tr.rotation_matrix(angle, axis)
+            T_hybrid = tr.concatenate_matrices(tr.rotation_matrix(angle, axis), T1)
             T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
             R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
             transform_states(trajectory.states, transform=R, position_only=True)
