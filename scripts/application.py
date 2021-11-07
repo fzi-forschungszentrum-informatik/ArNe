@@ -7,9 +7,11 @@ import transformations as tr
 from pathlib import Path
 from arne_application.srv import Macro, MacroRequest, MacroResponse
 from arne_motion_simulator.msg import State
+from nav_msgs.msg import Path as PathMessage
 from arne_skill_pipeline.skill import Skill
 from arne_skill_pipeline.rosbag_recorder import RosbagRecorder
 from arne_skill_pipeline.trajectory_player import TrajectoryPlayer
+from arne_skill_pipeline.trajectory_visualizer import TrajectoryVisualizer
 from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory, transform_state, transform_states, homogeneous
 
 
@@ -48,6 +50,10 @@ class Application(object):
         self.macro_recorder = RosbagRecorder({self.state_topic: State})
         self.macro_player = TrajectoryPlayer(self.replay_publisher)
 
+        # Visualization
+        self.path_publisher = rospy.Publisher('~macro_motion', PathMessage, queue_size=10)
+        self.macro_visualizer = TrajectoryVisualizer(self.path_publisher)
+
         rospy.loginfo("ArNe application ready.")
 
     def macro_mode(self, req):
@@ -84,6 +90,7 @@ class Application(object):
         GREEN = '\033[1;32m'
         RED = '\033[1;31m'
         YELLOW = '\033[1;33m'
+        BLUE = '\033[1;34m'
 
         #--------------------------------------------------------------------------------
         # Start recording
@@ -127,60 +134,10 @@ class Application(object):
             macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
             if Path(macrofile).is_file() and Path(bagfile).is_file():
-                macro = Skill()
-                macro.load_profile(macrofile)
 
-                _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
-                start = [0, 0, 0, 0, 0, 0, 1, self.state[7]] # identity
-
-                # Global macros drive to the globally recorded goal and need to
-                # map that into our current end-effector coordinate system for
-                # skill generation.
-                if req.type is MacroRequest.GLOBAL_MACRO:
-                    goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
-
-                # Local macros replicate the motion pattern in their local
-                # coordinate system and apply it in our current end-effector
-                # coordinate system.
-                elif req.type is MacroRequest.LOCAL_MACRO:
-                    goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
-
-                # Hybrid macros drive to the globally recorded position but
-                # keep their local orientation.
-                elif req.type is MacroRequest.HYBRID_MACRO:
-                    global_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
-                    local_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
-                    scale = np.linalg.norm(global_goal[:3]) / np.linalg.norm(local_goal[:3])
-                    goal = [scale * i for i in local_goal[:3]] + local_goal[3:]
-
-                else:
-                    return MacroResponse(False, "Unknown macro type {}.".format(req.type))
-
-                # Compute how to move to the goal pose while keeping the
-                # macro's motion profile.
-                trajectory = macro.generate_new_trajectory(start, goal, req.duration)
-
-                # Hybrid macros need an additional step to adequately display
-                # the generated profile in the current end-effector frame.
-                # See the documentation for details.
-                if req.type is MacroRequest.HYBRID_MACRO:
-
-                    T1 = tr.inverse_matrix(homogeneous(local_goal))
-                    p1 = tr.translation_from_matrix(T1)
-                    T2 = tr.inverse_matrix(homogeneous(global_goal))
-                    p2 = tr.translation_from_matrix(T2)
-
-                    angle = tr.angle_between_vectors(p1, p2)
-                    axis = tr.vector_product(p1, p2)
-                    T_hybrid = tr.rotation_matrix(angle, axis)
-                    T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
-                    R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
-                    transform_states(trajectory.states, transform=R, position_only=True)
-
-                # Display the states back in the robot's base frame for control.
-                transform_states(trajectory.states, transform=homogeneous(self.state))
-
+                trajectory = self.compute_macro_motion(macrofile, bagfile, req.type, req.duration)
                 self.macro_player.play(trajectory)
+
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
             else:
                 return MacroResponse(False, "Macro {} not found.".format(req.id))
@@ -213,16 +170,92 @@ class Application(object):
             except OSError:
                 pass
 
+        #--------------------------------------------------------------------------------
+        # Show playback
+        #--------------------------------------------------------------------------------
+        # Show the macro's motion in RViz
+        elif req.mode is MacroRequest.SHOW_PLAYBACK:
+            macrofile = '{}/{}.dmp'.format(self.macro_folder, req.id) 
+            bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
+            if Path(macrofile).is_file() and Path(bagfile).is_file():
+
+                trajectory = self.compute_macro_motion(macrofile, bagfile, req.type, req.duration)
+                self.macro_visualizer.show(trajectory, frame=self.frame_id)
+
+                rospy.loginfo(f"{BLUE}SHOW{NORMAL} macro playback")
+            else:
+                return MacroResponse(False, "Macro {} not found.".format(req.id))
+
+        #--------------------------------------------------------------------------------
         # Unknown mode
+        #--------------------------------------------------------------------------------
         else:
             rospy.loginfo("Unsupported macro mode")
             return MacroResponse(False, "Unsupported macro mode.")
 
         return MacroResponse(True, "Success.")
 
+    def compute_macro_motion(self, macrofile, bagfile, playback_type, duration):
+        """ Compute a trajectory for the given macro
+
+        Invalid playback types default to hybrid execution.
+        """
+        macro = Skill()
+        macro.load_profile(macrofile)
+
+        _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
+        start = [0, 0, 0, 0, 0, 0, 1, self.state[7]] # identity
+
+        # Global macros drive to the globally recorded goal and need to
+        # map that into our current end-effector coordinate system for
+        # skill generation.
+        if playback_type is MacroRequest.GLOBAL_MACRO:
+            goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
+
+        # Local macros replicate the motion pattern in their local
+        # coordinate system and apply it in our current end-effector
+        # coordinate system.
+        elif playback_type is MacroRequest.LOCAL_MACRO:
+            goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+
+        # Hybrid macros drive to the globally recorded position but
+        # keep their local orientation.
+        else:
+            playback_type = MacroRequest.HYBRID_MACRO
+            global_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
+            local_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+            scale = np.linalg.norm(global_goal[:3]) / np.linalg.norm(local_goal[:3])
+            goal = [scale * i for i in local_goal[:3]] + local_goal[3:]
+
+        # Compute how to move to the goal pose while keeping the
+        # macro's motion profile.
+        trajectory = macro.generate_new_trajectory(start, goal, duration)
+
+        # Hybrid macros need an additional step to adequately display
+        # the generated profile in the current end-effector frame.
+        # See the documentation for details.
+        if playback_type is MacroRequest.HYBRID_MACRO:
+
+            T1 = tr.inverse_matrix(homogeneous(local_goal))
+            p1 = tr.translation_from_matrix(T1)
+            T2 = tr.inverse_matrix(homogeneous(global_goal))
+            p2 = tr.translation_from_matrix(T2)
+
+            angle = tr.angle_between_vectors(p1, p2)
+            axis = tr.vector_product(p1, p2)
+            T_hybrid = tr.rotation_matrix(angle, axis)
+            T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
+            R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
+            transform_states(trajectory.states, transform=R, position_only=True)
+
+        # Display the states back in the robot's base frame for control.
+        transform_states(trajectory.states, transform=homogeneous(self.state))
+        return trajectory
+
     def state_callback(self, state):
         """ Keep track of the robot's current state
         """
+        self.frame_id = state.header.frame_id
         self.state = [
             state.pose.position.x,
             state.pose.position.y,
