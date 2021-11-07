@@ -175,36 +175,40 @@ def compute_trajectory(times, states):
 
     return Trajectory(times, states, states_dot, states_ddot)
 
+def homogeneous(state):
+    """ Return a homogeneous matrix from state's entries"""
+    return tr.concatenate_matrices(
+            tr.translation_matrix([state[0], state[1], state[2]]),
+            tr.quaternion_matrix([state[6], state[3], state[4], state[5]])) # normalizes quat
 
-def transform_state(state, transform, use_inverse=False):
+def transform_state(state, transform, **kwargs):
     """ Transform the state with a static transform
 
     This performs state = transform * state
     with homogeneous matrices.
+
+    Keyword arguments:
+    If `position_only`, only transform the state's position.
     """
-    def homogeneous(data):
-        """ Homogeneous transformation matrix """
-        T = tr.concatenate_matrices(
-                tr.translation_matrix([data[0], data[1], data[2]]),
-                tr.quaternion_matrix([data[6], data[3], data[4], data[5]])) # normalizes quat
-        return T
+    T = transform
+    if kwargs.get('position_only'):
+        S = tr.translation_matrix([state[0], state[1], state[2]])
+        S = tr.concatenate_matrices(T, S) # = T * S
+        p = tr.translation_from_matrix(S) # [x, y, z]
+        q = [state[6], state[3], state[4], state[5]] # unchanged
+    else:
+        S = homogeneous(state)
+        S = tr.concatenate_matrices(T, S) # = T * S
+        p = tr.translation_from_matrix(S) # [x, y, z]
+        q = tr.quaternion_from_matrix(S) # [qw, qx, qy, qz]
 
-    T = homogeneous(transform)
-    if use_inverse:
-        T = tr.inverse_matrix(T)
-
-    S = homogeneous(state)
-    S = tr.concatenate_matrices(T, S) # = T * S
-
-    p = tr.translation_from_matrix(S) # [x, y, z]
-    q = tr.quaternion_from_matrix(S) # [qw, qx, qy, qz]
     g = state[7] # gripper
 
     # We have a weight-last quaternion representation
     return [p[0], p[1], p[2], q[1], q[2], q[3], q[0], g]
 
 
-def transform_states(states, transform, use_inverse=False):
+def transform_states(states, transform, **kwargs):
     """ Transform each pose of a state array with a static transform
 
     Use this convenience function to change the coordinate frame of the
@@ -212,7 +216,7 @@ def transform_states(states, transform, use_inverse=False):
     The gripper values are not changed.
     """
     for i in range(0, len(states)):
-        states[i] = transform_state(states[i], transform, use_inverse)
+        states[i] = transform_state(states[i], transform, **kwargs)
 
 
 def save_trajectory(file_name, trajectory):
