@@ -135,6 +135,9 @@ class Application(object):
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
             if Path(macrofile).is_file() and Path(bagfile).is_file():
 
+                if req.duration <= 0.0:
+                    return MacroResponse(False, "Invalid playback duration {}".format(req.duration))
+
                 trajectory = self.compute_macro_motion(macrofile, bagfile, req.type, req.duration)
                 self.macro_player.play(trajectory)
 
