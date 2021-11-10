@@ -135,7 +135,10 @@ class Application(object):
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
             if Path(macrofile).is_file() and Path(bagfile).is_file():
 
-                trajectory = self.compute_macro_motion(macrofile, bagfile, req.type, req.duration)
+                if req.duration <= 0.0:
+                    return MacroResponse(False, "Invalid playback duration {}".format(req.duration))
+
+                trajectory = self.compute_macro_motion(macrofile, bagfile, req.playback_type, req.duration)
                 self.macro_player.play(trajectory)
 
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
@@ -179,7 +182,7 @@ class Application(object):
             bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
             if Path(macrofile).is_file() and Path(bagfile).is_file():
 
-                trajectory = self.compute_macro_motion(macrofile, bagfile, req.type, req.duration)
+                trajectory = self.compute_macro_motion(macrofile, bagfile, req.playback_type, req.duration)
                 self.macro_visualizer.show(trajectory, frame=self.frame_id)
 
                 rospy.loginfo(f"{BLUE}SHOW{NORMAL} macro playback")
