@@ -15,10 +15,10 @@ uint8 TOGGLE_PLAYBACK = 4
 uint8 DELETE_MACRO = 5
 uint8 SHOW_PLAYBACK = 6
 
-# Semantic type of the macro.
-uint8 type
+# Type of macro playback.
+uint8 playback_type
 
-# Supported semantic types:
+# Supported playback types:
 # 0 : Hybrid macros converge to the globally recorded goal position but use
 #     the local orientation. This is useful when only the position is relevant
 #     and the orientation would distort the motion too much.
