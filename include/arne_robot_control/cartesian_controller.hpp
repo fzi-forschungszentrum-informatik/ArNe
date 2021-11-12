@@ -2,7 +2,7 @@
 // -- END LICENSE BLOCK -------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-/*!\file    cartesian_controller.cpp
+/*!\file    cartesian_controller.hpp
  *
  * \author  Stefan Scherzinger <scherzin@fzi.de>
  * \date    2021/08/18
