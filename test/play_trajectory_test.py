@@ -2,7 +2,7 @@
 from arne_skill_pipeline.trajectory_player import TrajectoryPlayer
 import arne_skill_pipeline.trajectories as traj
 import rospy
-from arne_motion_simulator.msg import State
+from arne_skill_pipeline.msg import State
 import time
 
 """

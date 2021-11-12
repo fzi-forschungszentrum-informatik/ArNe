@@ -6,7 +6,7 @@ import transformations as tr
 import os
 import csv
 import matplotlib.pyplot as plt
-from arne_motion_simulator.msg import State
+from arne_skill_pipeline.msg import State
 
 
 class Trajectory(object):
