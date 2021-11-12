@@ -6,7 +6,7 @@ import numpy as np
 import transformations as tr
 from pathlib import Path
 from arne_application.srv import Macro, MacroRequest, MacroResponse
-from arne_motion_simulator.msg import State
+from arne_skill_pipeline.msg import State
 from nav_msgs.msg import Path as PathMessage
 from arne_skill_pipeline.skill import Skill
 from arne_skill_pipeline.rosbag_recorder import RosbagRecorder
