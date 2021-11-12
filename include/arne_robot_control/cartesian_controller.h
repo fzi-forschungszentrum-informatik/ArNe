@@ -60,9 +60,11 @@ namespace arne_robot_control
       virtual void update(const ros::Time& time, const ros::Duration& period) override;
 
     private:
-      //! Switch between global and relative coordinates for control
+      //! Perform realtime updates to how Cartesian control behaves
       void dynamicReconfigureCallback(ControlConfig& config, uint32_t level);
+      void limitTargetOffset(KDL::Frame& target);
       std::atomic<bool> m_local_coordinates;
+      std::atomic<double> m_max_lin_offset;
 
       std::shared_ptr<dynamic_reconfigure::Server<ControlConfig>> m_reconfig_server;
       dynamic_reconfigure::Server<ControlConfig>::CallbackType callback_type_;

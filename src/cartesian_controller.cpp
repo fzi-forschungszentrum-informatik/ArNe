@@ -107,6 +107,9 @@ namespace arne_robot_control
     q.normalize();
     m_target_frame.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
 
+    // Make sure we don't stray too far from our current pose.
+    limitTargetOffset(m_target_frame);
+
     // Give visual feedback on the current target
     geometry_msgs::PoseStamped current_target;
     current_target.header.stamp = ros::Time::now();
@@ -127,6 +130,7 @@ namespace arne_robot_control
   void CartesianController::dynamicReconfigureCallback(ControlConfig& config, uint32_t level)
   {
     m_local_coordinates = config.local_coordinates;
+    m_max_lin_offset = config.max_lin_offset;
   }
 
   void CartesianController::motionControlCallback(const geometry_msgs::Twist& input)
@@ -150,6 +154,15 @@ namespace arne_robot_control
     p.header.frame_id = Base::m_robot_base_link;
     p.pose = state.pose;
     MotionBase::targetFrameCallback(p);
+  }
+
+  void CartesianController::limitTargetOffset(KDL::Frame& target)
+  {
+    auto offset = target.p - m_current_frame.p;
+    if (offset.Normalize() > m_max_lin_offset)
+    {
+      target.p = m_current_frame.p + offset * m_max_lin_offset;
+    }
   }
 }
 
