@@ -10,7 +10,6 @@ project(arne_motion_simulator)
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   geometry_msgs
-  message_generation
   rosbridge_server
   rospy
   sensor_msgs
@@ -51,10 +50,10 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  State.msg
-)
+#add_message_files(
+#  FILES
+#  State.msg
+#)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -71,11 +70,11 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-  std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#  geometry_msgs
+#  std_msgs
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -111,7 +110,6 @@ catkin_package(
   CATKIN_DEPENDS
   dynamic_reconfigure
   geometry_msgs
-  message_runtime
   rospy
   std_msgs
 #  DEPENDS system_lib

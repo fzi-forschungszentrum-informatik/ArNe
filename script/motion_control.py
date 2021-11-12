@@ -7,7 +7,7 @@ from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist
 from dynamic_reconfigure.server import Server
-from arne_motion_simulator.msg import State
+from arne_skill_pipeline.msg import State
 from arne_motion_simulator.cfg import MotionControlConfig
 import tf
 
