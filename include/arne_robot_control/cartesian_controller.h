@@ -27,6 +27,11 @@ namespace arne_robot_control
   /**
    * @brief A combined arm-gripper controller for both direct control and skill replay
    *
+   * Gripper control is optional since not all RobotHW implementations will
+   * provide a suitable hardware_interface::PositionJointInterface for the
+   * gripper. In case it's not supported, we assume that an external node
+   * manages the gripper separatedly.
+   *
    * This controller provides the following interfaces:
    *
    *   1) Direct: Cartesian motion control (geometry_msgs::TwistStamped)
@@ -41,7 +46,7 @@ namespace arne_robot_control
    * of simplicity in high-level state machine code.
    *
    * Cartesian motion can be directly controlled either in the end-effector's
-   * local frame or the robots global base frame.  The switch is done via via
+   * local frame or the robots global base frame.  The switch is done via
    * dynamic reconfigure.
    *
    * This controller also publishes the current robot pose and the gripper
@@ -75,8 +80,9 @@ namespace arne_robot_control
       void motionControlCallback(const geometry_msgs::Twist& input);
 
       // Gripper control
+      bool m_use_gripper;
       double m_gripper_control; //!< Speed, positive = open, negative = close
-      std::atomic<double> m_gripper_state; //!< Abstract state between [0, 1]
+      std::atomic<double> m_gripper_state; //!< Abstract state between [0, 1]. A value of -1 means not supported.
       hardware_interface::JointHandle m_gripper_handle;
       ros::Subscriber m_gripper_control_subscriber;
       void gripperControlCallback(const std_msgs::Float64& input);

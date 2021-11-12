@@ -39,9 +39,17 @@ namespace arne_robot_control
     m_motion_control_subscriber = nh.subscribe("motion_control_input", 3, &CartesianController::motionControlCallback, this);
 
     // Gripper control
-    m_gripper_control_subscriber = nh.subscribe("gripper_control_input", 3, &CartesianController::gripperControlCallback, this);
-    std::string gripper = nh.param("gripper", std::string("no-gripper-joint-specified"));
-    m_gripper_handle = hw->getHandle(gripper);
+    std::string gripper = nh.param("gripper", std::string(""));
+    if (!gripper.empty())
+    {
+      m_gripper_control_subscriber = nh.subscribe("gripper_control_input", 3, &CartesianController::gripperControlCallback, this);
+      m_gripper_handle = hw->getHandle(gripper);
+      m_use_gripper = true;;
+    }
+    else
+    {
+      m_use_gripper = false;;
+    }
 
     // Feedback and replay
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
@@ -54,7 +62,14 @@ namespace arne_robot_control
   void CartesianController::starting(const ros::Time& time)
   {
     MotionBase::starting(time);
-    m_gripper_state = m_gripper_handle.getPosition();
+    if (m_use_gripper)
+    {
+      m_gripper_state = m_gripper_handle.getPosition();
+    }
+    else
+    {
+      m_gripper_state = -1.0;
+    }
   }
 
   void CartesianController::update(const ros::Time& time, const ros::Duration& period)
@@ -73,9 +88,12 @@ namespace arne_robot_control
     m_state_publisher.publish(state);
 
     // Integrate gripper control into abstract state in [0, 1].
-    m_gripper_state = m_gripper_state + m_gripper_control * period.toSec();
-    m_gripper_state = std::max(0.0, std::min(1.0, m_gripper_state.load()));
-    m_gripper_handle.setCommand(m_gripper_state);
+    if (m_use_gripper)
+    {
+      m_gripper_state = m_gripper_state + m_gripper_control * period.toSec();
+      m_gripper_state = std::max(0.0, std::min(1.0, m_gripper_state.load()));
+      m_gripper_handle.setCommand(m_gripper_state);
+    }
 
     // Quaternion velocity from angular velocity:
     // https://math.stackexchange.com/questions/1792826
