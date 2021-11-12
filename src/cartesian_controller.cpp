@@ -10,7 +10,7 @@
  */
 //-----------------------------------------------------------------------------
 
-#include "arne_motion_simulator/State.h"
+#include "arne_skill_pipeline/State.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "ros/time.h"
 #include <arne_robot_control/cartesian_controller.h>
@@ -46,7 +46,7 @@ namespace arne_robot_control
     // Feedback and replay
     m_replay_subscriber = nh.subscribe("replay_input", 3, &CartesianController::replayCallback, this);
     m_current_target_publisher = nh.advertise<geometry_msgs::PoseStamped>("current_target", 3);
-    m_state_publisher = nh.advertise<arne_motion_simulator::State>("state_output", 3);
+    m_state_publisher = nh.advertise<arne_skill_pipeline::State>("state_output", 3);
 
     return true;
   }
@@ -60,7 +60,7 @@ namespace arne_robot_control
   void CartesianController::update(const ros::Time& time, const ros::Duration& period)
   {
     // State feedback for skill recording
-    arne_motion_simulator::State state;
+    arne_skill_pipeline::State state;
     state.header.frame_id = Base::m_robot_base_link;
     state.header.stamp = ros::Time::now();
     state.gripper.data = m_gripper_state;
@@ -139,7 +139,7 @@ namespace arne_robot_control
     m_gripper_control = input.data;
   }
 
-  void CartesianController::replayCallback(const arne_motion_simulator::State& state)
+  void CartesianController::replayCallback(const arne_skill_pipeline::State& state)
   {
     m_gripper_state = state.gripper.data;
     geometry_msgs::PoseStamped p;

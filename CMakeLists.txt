@@ -10,7 +10,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  arne_motion_simulator
+  arne_skill_pipeline
   cartesian_controller_base
   cartesian_motion_controller
   dynamic_reconfigure
@@ -113,7 +113,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    arne_motion_simulator
+    arne_skill_pipeline
     cartesian_controller_base
     cartesian_motion_controller
     dynamic_reconfigure

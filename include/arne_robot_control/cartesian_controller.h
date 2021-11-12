@@ -14,7 +14,7 @@
 #include <ros/subscriber.h>
 #include <cartesian_motion_controller/cartesian_motion_controller.h>
 #include <hardware_interface/joint_command_interface.h>
-#include <arne_motion_simulator/State.h>
+#include <arne_skill_pipeline/State.h>
 #include <geometry_msgs/Twist.h>
 #include <dynamic_reconfigure/server.h>
 #include <arne_robot_control/ControlConfig.h>
@@ -33,7 +33,7 @@ namespace arne_robot_control
    *
    *   2) Direct: Gripper speed control (std_msgs::Float64)
    *
-   *   3) Replay: Cartesian motion and gripper state (arne_motion_simulator::State)
+   *   3) Replay: Cartesian motion and gripper state (arne_skill_pipeline::State)
    *
    * Note: This controller processes input topics for both direct control and
    * replay in parallel. If both receive data, the replay callback will
@@ -83,7 +83,7 @@ namespace arne_robot_control
       ros::Subscriber m_replay_subscriber;
       ros::Publisher m_current_target_publisher;
       ros::Publisher m_state_publisher;
-      void replayCallback(const arne_motion_simulator::State& state);
+      void replayCallback(const arne_skill_pipeline::State& state);
   };
 
 }
