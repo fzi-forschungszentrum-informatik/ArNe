@@ -10,19 +10,20 @@
  */
 //-----------------------------------------------------------------------------
 
+#ifndef CARTESIAN_CONTROLLER_H_INCLUDED
+#define CARTESIAN_CONTROLLER_H_INCLUDED
+
 #include <ros/publisher.h>
 #include <ros/subscriber.h>
-#include <cartesian_motion_controller/cartesian_motion_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <arne_skill_pipeline/State.h>
 #include <geometry_msgs/Twist.h>
 #include <dynamic_reconfigure/server.h>
 #include <arne_robot_control/ControlConfig.h>
+#include <kdl/frames.hpp>
 
 namespace arne_robot_control
 {
-  using MotionBase =
-    cartesian_motion_controller::CartesianMotionController<hardware_interface::PositionJointInterface>;
 
   /**
    * @brief A combined arm-gripper controller for both direct control and skill replay
@@ -52,12 +53,15 @@ namespace arne_robot_control
    * This controller also publishes the current robot pose and the gripper
    * position to ROS topic for skill recording.  The publishing frequency is
    * bound to the controller_manager's update rate.
+   *
+   * @tparam ControlPolicy The CartesianController used as execution policy
    */
-  class CartesianController : public MotionBase
+  template <class ControlPolicy>
+  class CartesianController : public ControlPolicy
   {
     public:
 
-      //! Override MotionBase' callbacks
+      //! Override ControlPolicy' callbacks
       virtual bool init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh) override;
 
       void starting(const ros::Time& time) override;
@@ -95,3 +99,6 @@ namespace arne_robot_control
   };
 
 }
+
+#include <arne_robot_control/cartesian_controller.hpp>
+#endif

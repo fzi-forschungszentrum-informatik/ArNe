@@ -14,17 +14,30 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "ros/time.h"
 #include <arne_robot_control/cartesian_controller.h>
+#include <cartesian_compliance_controller/cartesian_compliance_controller.h>
 #include <kdl/frames.hpp>
-#include <pluginlib/class_list_macros.h>
-#include <controller_interface/controller_base.h>
 
 #include <Eigen/Dense>
 
 namespace arne_robot_control
 {
-  bool CartesianController::init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh)
+  template <class ControlPolicy>
+  bool CartesianController<ControlPolicy>::init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh)
   {
-    Base::init(hw, nh);
+    ControlPolicy::init(hw, nh);
+
+    // Unregister CartesianMotionController's target callback.
+    // We provide our own callbacks for direct control and macro replay.
+    if constexpr (std::is_same<ControlPolicy,
+        cartesian_motion_controller::CartesianMotionController<hardware_interface::PositionJointInterface>>::value)
+    {
+      ControlPolicy::m_target_frame_subscr.shutdown();
+    }
+    else if constexpr (std::is_same<ControlPolicy,
+        cartesian_compliance_controller::CartesianComplianceController<hardware_interface::PositionJointInterface>>::value)
+    {
+      ControlPolicy::MotionBase::m_target_frame_subscr.shutdown();
+    }
 
     // Connect dynamic reconfigure and overwrite the default values with values
     // on the parameter server. This is done automatically if parameters with
@@ -59,9 +72,10 @@ namespace arne_robot_control
     return true;
   }
 
-  void CartesianController::starting(const ros::Time& time)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::starting(const ros::Time& time)
   {
-    MotionBase::starting(time);
+    ControlPolicy::starting(time);
     if (m_use_gripper)
     {
       m_gripper_state = m_gripper_handle.getPosition();
@@ -72,17 +86,18 @@ namespace arne_robot_control
     }
   }
 
-  void CartesianController::update(const ros::Time& time, const ros::Duration& period)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::update(const ros::Time& time, const ros::Duration& period)
   {
     // State feedback for skill recording
     arne_skill_pipeline::State state;
-    state.header.frame_id = Base::m_robot_base_link;
+    state.header.frame_id = ControlPolicy::m_robot_base_link;
     state.header.stamp = ros::Time::now();
     state.gripper.data = m_gripper_state;
-    state.pose.position.x = m_current_frame.p.x();
-    state.pose.position.y = m_current_frame.p.y();
-    state.pose.position.z = m_current_frame.p.z();
-    m_current_frame.M.GetQuaternion(
+    state.pose.position.x = ControlPolicy::m_current_frame.p.x();
+    state.pose.position.y = ControlPolicy::m_current_frame.p.y();
+    state.pose.position.z = ControlPolicy::m_current_frame.p.z();
+    ControlPolicy::m_current_frame.M.GetQuaternion(
         state.pose.orientation.x, state.pose.orientation.y,
         state.pose.orientation.z, state.pose.orientation.w);
     m_state_publisher.publish(state);
@@ -98,7 +113,7 @@ namespace arne_robot_control
     // Quaternion velocity from angular velocity:
     // https://math.stackexchange.com/questions/1792826
     Eigen::Quaterniond q;
-    m_target_frame.M.GetQuaternion(q.x(), q.y(), q.z(), q.w());
+    ControlPolicy::m_target_frame.M.GetQuaternion(q.x(), q.y(), q.z(), q.w());
     Eigen::Quaterniond w(0, m_motion_control.angular.x, m_motion_control.angular.y, m_motion_control.angular.z);
 
     if (m_local_coordinates)
@@ -106,35 +121,35 @@ namespace arne_robot_control
       // Frames are given w.r.t. the robot base frame, so we need a
       // transformation before integrating in end-effector relative
       // coordinates.
-      auto tmp = m_current_frame.Inverse() * m_target_frame.p;
+      auto tmp = ControlPolicy::m_current_frame.Inverse() * ControlPolicy::m_target_frame.p;
       tmp += KDL::Vector(m_motion_control.linear.x, m_motion_control.linear.y, m_motion_control.linear.z) * period.toSec();
 
       // Transform back
-      tmp = m_current_frame * tmp;
-      m_target_frame.p = KDL::Vector(tmp.x(), tmp.y(), tmp.z());
+      tmp = ControlPolicy::m_current_frame * tmp;
+      ControlPolicy::m_target_frame.p = KDL::Vector(tmp.x(), tmp.y(), tmp.z());
 
       q.coeffs() += 0.5 * (q * w).coeffs() * period.toSec();
     }
     else
     {
       // Base frame relative time integration
-      m_target_frame.p += KDL::Vector(m_motion_control.linear.x, m_motion_control.linear.y, m_motion_control.linear.z) * period.toSec();
+      ControlPolicy::m_target_frame.p += KDL::Vector(m_motion_control.linear.x, m_motion_control.linear.y, m_motion_control.linear.z) * period.toSec();
 
       q.coeffs() += 0.5 * (w * q).coeffs() * period.toSec();
     }
     q.normalize();
-    m_target_frame.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
+    ControlPolicy::m_target_frame.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
 
     // Make sure we don't stray too far from our current pose.
-    limitTargetOffset(m_target_frame);
+    limitTargetOffset(ControlPolicy::m_target_frame);
 
     // Give visual feedback on the current target
     geometry_msgs::PoseStamped current_target;
     current_target.header.stamp = ros::Time::now();
-    current_target.header.frame_id = Base::m_robot_base_link;
-    current_target.pose.position.x = m_target_frame.p.x();
-    current_target.pose.position.y = m_target_frame.p.y();
-    current_target.pose.position.z = m_target_frame.p.z();
+    current_target.header.frame_id = ControlPolicy::m_robot_base_link;
+    current_target.pose.position.x = ControlPolicy::m_target_frame.p.x();
+    current_target.pose.position.y = ControlPolicy::m_target_frame.p.y();
+    current_target.pose.position.z = ControlPolicy::m_target_frame.p.z();
     current_target.pose.orientation.x = q.x();
     current_target.pose.orientation.y = q.y();
     current_target.pose.orientation.z = q.z();
@@ -142,26 +157,30 @@ namespace arne_robot_control
     m_current_target_publisher.publish(current_target);
 
     // Process m_target_frame as usual
-    MotionBase::update(time, period);
+    ControlPolicy::update(time, period);
   }
 
-  void CartesianController::dynamicReconfigureCallback(ControlConfig& config, uint32_t level)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::dynamicReconfigureCallback(ControlConfig& config, uint32_t level)
   {
     m_local_coordinates = config.local_coordinates;
     m_max_lin_offset = config.max_lin_offset;
   }
 
-  void CartesianController::motionControlCallback(const geometry_msgs::Twist& input)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::motionControlCallback(const geometry_msgs::Twist& input)
   {
     m_motion_control = input;
   }
 
-  void CartesianController::gripperControlCallback(const std_msgs::Float64& input)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::gripperControlCallback(const std_msgs::Float64& input)
   {
     m_gripper_control = input.data;
   }
 
-  void CartesianController::replayCallback(const arne_skill_pipeline::State& state)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::replayCallback(const arne_skill_pipeline::State& state)
   {
     m_gripper_state = state.gripper.data;
     geometry_msgs::PoseStamped p;
@@ -169,19 +188,19 @@ namespace arne_robot_control
     // State feedback during recording is always given in robot base frame.
     // Generalizing skills from this recording does not change this, so it's
     // safe to always set this frame here for control.
-    p.header.frame_id = Base::m_robot_base_link;
+    p.header.frame_id = ControlPolicy::m_robot_base_link;
     p.pose = state.pose;
-    MotionBase::targetFrameCallback(p);
+    ControlPolicy::targetFrameCallback(p);
   }
 
-  void CartesianController::limitTargetOffset(KDL::Frame& target)
+  template <class ControlPolicy>
+  void CartesianController<ControlPolicy>::limitTargetOffset(KDL::Frame& target)
   {
-    auto offset = target.p - m_current_frame.p;
+    auto offset = target.p - ControlPolicy::m_current_frame.p;
     if (offset.Normalize() > m_max_lin_offset)
     {
-      target.p = m_current_frame.p + offset * m_max_lin_offset;
+      target.p = ControlPolicy::m_current_frame.p + offset * m_max_lin_offset;
     }
   }
 }
 
-PLUGINLIB_EXPORT_CLASS(arne_robot_control::CartesianController, controller_interface::ControllerBase)
