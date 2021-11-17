@@ -20,12 +20,12 @@ namespace arne_robot_control
 {
   // For free space motion without contact
   using MotionControl = cartesian_motion_controller::CartesianMotionController<hardware_interface::PositionJointInterface>;
-  using CartesianMotionController = arne_robot_control::CartesianController<MotionControl>;
+  using MotionSkillController = arne_robot_control::CartesianController<MotionControl>;
 
   // For motion in end-effector contact with the environment
   using ComplianceControl = cartesian_compliance_controller::CartesianComplianceController<hardware_interface::PositionJointInterface>;
-  using CartesianComplianceController = arne_robot_control::CartesianController<ComplianceControl>;
+  using ComplianceSkillController = arne_robot_control::CartesianController<ComplianceControl>;
 }
 
-PLUGINLIB_EXPORT_CLASS(arne_robot_control::CartesianMotionController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arne_robot_control::CartesianComplianceController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arne_robot_control::MotionSkillController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arne_robot_control::ComplianceSkillController, controller_interface::ControllerBase)

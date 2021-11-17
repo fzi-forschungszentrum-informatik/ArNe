@@ -1,7 +1,7 @@
 <library path="lib/libarne_robot_control">
 
-  <class name="arne_robot_control/CartesianMotionController"
-         type="arne_robot_control::CartesianMotionController"
+  <class name="arne_robot_control/MotionSkillController"
+         type="arne_robot_control::MotionSkillController"
          base_class_type="controller_interface::ControllerBase">
     <description>
         ROS-controller for direct servoing and skill replay in the ArNe project.
@@ -9,8 +9,8 @@
     </description>
   </class>
 
-  <class name="arne_robot_control/CartesianComplianceController"
-         type="arne_robot_control::CartesianComplianceController"
+  <class name="arne_robot_control/ComplianceSkillController"
+         type="arne_robot_control::ComplianceSkillController"
          base_class_type="controller_interface::ControllerBase">
     <description>
         ROS-controller for direct servoing and skill replay in the ArNe project.
