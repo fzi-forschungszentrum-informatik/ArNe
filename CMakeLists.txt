@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(arne_robot_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
  
@@ -11,6 +11,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   arne_skill_pipeline
+  cartesian_compliance_controller
   cartesian_controller_base
   cartesian_motion_controller
   dynamic_reconfigure
@@ -114,6 +115,7 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     arne_skill_pipeline
+    cartesian_compliance_controller
     cartesian_controller_base
     cartesian_motion_controller
     dynamic_reconfigure

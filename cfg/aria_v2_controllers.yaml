@@ -18,7 +18,7 @@ arm_only: &arm_only
     - Joint_6
 
 cartesian_controller:
-    type: "arne_robot_control/CartesianController"
+    type: "arne_robot_control/MotionSkillController"
     ik_solver: "damped_least_squares"
     end_effector_link: "control"
     robot_base_link: "Link_0"
