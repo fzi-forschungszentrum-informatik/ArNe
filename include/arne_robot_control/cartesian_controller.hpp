@@ -45,7 +45,7 @@ namespace arne_robot_control
     callback_type_ =
       std::bind(&CartesianController::dynamicReconfigureCallback, this, std::placeholders::_1, std::placeholders::_2);
 
-    m_reconfig_server = std::make_shared<dynamic_reconfigure::Server<ControlConfig> >(nh);
+    m_reconfig_server = std::make_shared<dynamic_reconfigure::Server<ControlConfig> >(ros::NodeHandle(nh, "teaching"));
     m_reconfig_server->setCallback(callback_type_);
 
     // Motion control
