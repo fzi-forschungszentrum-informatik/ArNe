@@ -140,8 +140,14 @@ namespace arne_robot_control
     q.normalize();
     ControlPolicy::m_target_frame.M = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
 
-    // Make sure we don't stray too far from our current pose.
-    limitTargetOffset(ControlPolicy::m_target_frame);
+    // Make sure we don't stray too far from our current pose in motion control.
+    // Compliance control needs those offsets for its computation of restoring
+    // spring forces.
+    if constexpr (std::is_same<ControlPolicy,
+        cartesian_motion_controller::CartesianMotionController<hardware_interface::PositionJointInterface>>::value)
+    {
+      limitTargetOffset(ControlPolicy::m_target_frame);
+    }
 
     // Give visual feedback on the current target
     geometry_msgs::PoseStamped current_target;
