@@ -246,10 +246,16 @@ class Application(object):
 
             angle = tr.angle_between_vectors(p1, p2)
             axis = tr.vector_product(p1, p2)
-            T_hybrid = tr.concatenate_matrices(tr.rotation_matrix(angle, axis), T1)
-            T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
-            R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
-            transform_states(trajectory.states, transform=R, position_only=True)
+            if np.linalg.norm(axis) > np.finfo(float).eps:
+                T_hybrid = tr.concatenate_matrices(tr.rotation_matrix(angle, axis), T1)
+                T = tr.concatenate_matrices(tr.inverse_matrix(T2), T_hybrid)
+                R = tr.quaternion_matrix(tr.quaternion_from_matrix(T)) # Rotation matrix
+                transform_states(trajectory.states, transform=R, position_only=True)
+            else:
+                # The global and the local goal are so close that there's
+                # no point for hybrid execution.  We default to local macro
+                # execution instead.
+                pass
 
         # Display the states back in the robot's base frame for control.
         transform_states(trajectory.states, transform=homogeneous(self.state))
