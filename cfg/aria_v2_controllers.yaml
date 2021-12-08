@@ -19,24 +19,23 @@ arm_only: &arm_only
 
 cartesian_controller:
     type: "arne_robot_control/MotionSkillController"
-    ik_solver: "damped_least_squares"
+    ik_solver: "selectively_damped_least_squares"
     end_effector_link: "control"
     robot_base_link: "Link_0"
     joints: *arm_only
     gripper: Joint_7
 
     pd_gains:
-        trans_x: {p: 10.0}
-        trans_y: {p: 10.0}
-        trans_z: {p: 10.0}
+        trans_x: {p: 5.0}
+        trans_y: {p: 5.0}
+        trans_z: {p: 5.0}
         rot_x: {p: 1.0}
         rot_y: {p: 1.0}
         rot_z: {p: 1.0}
 
     solver:
-        error_scale: 1.0
-        damped_least_squares:
-            alpha: 0.2  # user-specific handling of singularities
+        error_scale: 5.0
+        iterations: 10
  
 joint_state_controller:
   type: joint_state_controller/JointStateController
