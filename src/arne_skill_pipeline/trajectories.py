@@ -126,9 +126,10 @@ def write_rosbag(trajectory, filename):
 def diff(states, h):
     """ Smooth differentiator
 
-    Compute time differences with a 5-point smoothing differentiator for every
-    function contained in states.
-    Formulas are from Pavel Holoborodko (holoborodko.com).
+    Compute time differences with a 7-point smooth noise-robust differentiator
+    for every function contained in states.
+    Formulas are from Pavel Holoborodko:
+    http://www.holoborodko.com/pavel/numerical-methods/numerical-derivative/smooth-low-noise-differentiators/
 
     Args:
         states: A time major array of states.

@@ -28,12 +28,18 @@ class Skill:
     """
 
     def __init__(self):
+        # Transformation system and parameter settings inspired by
+        # Ijspeert et al:
+        # "Dynamical movement primitives: learning attractor models for motor behaviors",
+        # Neural Computation, 2013
 
         # These will probably be constant for most skills.
         # TODO: Let's check if we need a skill-wise specialization after we
         # have more experience with this skill framework.
-        self.stiffness = 3.5
-        self.damping = 0.55
+        self.stiffness = 0.55
+
+        # Critical damping for > self.stiffness * 4, see Ijspeert et al, p. 4
+        self.damping = 3.5
 
         # Nominal step width of the initial trajectory.
         self.dt = 0.01
@@ -69,8 +75,9 @@ class Skill:
             traj = trajectory.get_dimension(d)
             goal = traj['pos'][-1]
             for t in range(self.traj_points):
-                self.activation[d][t] = traj['acc'][t] - self.stiffness * \
-                    (self.damping * (goal - traj['pos'][t]) - traj['vel'][t])
+                # See Ijspeert et al, p.4
+                self.activation[d][t] = traj['acc'][t] - self.damping * \
+                    (self.stiffness * (goal - traj['pos'][t]) - traj['vel'][t])
 
         print("learned trajectory")
 
@@ -132,8 +139,8 @@ class Skill:
         for d in range(self.state_dim):
             pos[d][0] = start_state[d]
             for t in range(1, self.traj_points):
-                acc[d][t] = self.stiffness * (
-                    self.damping * (goal_state[d] - pos[d][t - 1]) - vel[d][t - 1]) + self.activation[d][t]
+                acc[d][t] = self.damping * (
+                    self.stiffness * (goal_state[d] - pos[d][t - 1]) - vel[d][t - 1]) + self.activation[d][t]
                 vel[d][t] = vel[d][t - 1] + self.dt * acc[d][t]
                 pos[d][t] = pos[d][t - 1] + self.dt * vel[d][t]
 
