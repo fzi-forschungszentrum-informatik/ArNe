@@ -22,6 +22,13 @@ the gripper takes motion (speed input) from the two topics
 
 which are numerically integrated to yield a 6D pose and gripper grasping width.
 
+## Run the space mouse
+In a sourced environment, launch the space mouse driver with
+```bash
+roslaunch arne_motion_simulator spacemouse_control.launch
+```
+and steer the gripper's 6D pose in RViz.
+
 ## Run the GUI dummy
 Open ``gui_dummy/gui.html`` from this package with your favorite web browser.
 The page will start sending a continuous (but nonsense) stream of commands
