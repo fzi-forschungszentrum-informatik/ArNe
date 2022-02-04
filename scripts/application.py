@@ -49,6 +49,7 @@ class Application(object):
         self.macro_server = rospy.Service('~macro_mode', Macro, self.macro_mode)
         self.motion_recorder = RosbagRecorder({self.state_topic: State})
         self.macro_player = TrajectoryPlayer(self.replay_publisher)
+        self.log_execution = True
 
         # Visualization
         self.path_publisher = rospy.Publisher('~macro_motion', PathMessage, queue_size=10)
@@ -139,7 +140,17 @@ class Application(object):
                     return MacroResponse(False, "Invalid playback duration {}".format(req.duration))
 
                 trajectory = self.compute_macro_motion(macrofile, bagfile, req.playback_type, req.duration)
-                self.macro_player.play(trajectory)
+
+                # Record the execution for later analysis
+                if self.log_execution:
+                    self.motion_recorder.start_recording(wait_for_data=True)
+                    self.macro_player.play(
+                        trajectory,
+                        done_cb=lambda: self.motion_recorder.stop_recording(
+                            self.macro_folder, prefix="{}_".format(req.id), stamped=True)
+                    )
+                else:
+                    self.macro_player.play(trajectory)
 
                 rospy.loginfo(f"{GREEN}START{NORMAL} macro playback")
             else:
