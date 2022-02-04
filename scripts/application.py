@@ -47,7 +47,7 @@ class Application(object):
         # Macro functionality
         self.replay_publisher = rospy.Publisher('cartesian_controller/replay_input', State, queue_size=10)
         self.macro_server = rospy.Service('~macro_mode', Macro, self.macro_mode)
-        self.macro_recorder = RosbagRecorder({self.state_topic: State})
+        self.motion_recorder = RosbagRecorder({self.state_topic: State})
         self.macro_player = TrajectoryPlayer(self.replay_publisher)
 
         # Visualization
@@ -98,7 +98,7 @@ class Application(object):
         # Start recording robot motion into internal buffers.
         # Do nothing on repeated calls.
         if req.mode is MacroRequest.START_RECORDING:
-            if self.macro_recorder.start_recording(wait_for_data=True):
+            if self.motion_recorder.start_recording(wait_for_data=True):
                 rospy.loginfo(f"{CYAN}START{NORMAL} macro recording")
 
         #--------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ class Application(object):
         # If that was successful, generalize the .bag file into a macro and
         # save it with .dmp extension into the same directory.
         elif req.mode is MacroRequest.STOP_RECORDING:
-            if self.macro_recorder.stop_recording(self.macro_folder, prefix=req.id):
+            if self.motion_recorder.stop_recording(self.macro_folder, prefix=req.id):
                 bagfile = '{}/{}.bag'.format(self.macro_folder, req.id) 
                 if Path(bagfile).is_file():
                     times, states = read_rosbag(bagfile, state_topic=self.state_topic)
