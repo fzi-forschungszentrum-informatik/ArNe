@@ -26,7 +26,7 @@ class TrajectoryPlayer(object):
         self.paused = False
         self.stopped = True
 
-    def _publish(self, trajectory):
+    def _publish(self, trajectory, done_cb):
         """ Publish the trajectory as discrete State topics to ROS
 
         We use a timer object to publish trajectory waypoints in equidistant
@@ -72,7 +72,12 @@ class TrajectoryPlayer(object):
             rospy.sleep(0.1)
         timer.shutdown()
 
-    def play(self, trajectory):
+        # Finish with caller-specified lambda
+        if done_cb is not None:
+            done_cb()
+
+
+    def play(self, trajectory, done_cb=None):
         """ Play the trajectory for robot control
 
         This function is non-blocking.
@@ -85,13 +90,14 @@ class TrajectoryPlayer(object):
         This method does the following:
         - Preempt old trajectories with new ones
         - Continuously publish to Ros topics in a separate thread
+        - Call `done_cb` when finished
         """
         # Preempt any playing trajectory.
         self.stop()
 
         # Start publishing in a separate thread
         self.stopped = False
-        self.play_thread = threading.Thread(target=self._publish, args=(trajectory, ), daemon=True)
+        self.play_thread = threading.Thread(target=self._publish, args=(trajectory, done_cb), daemon=True)
         self.play_thread.start()
         return self.play_thread.is_alive()
 
