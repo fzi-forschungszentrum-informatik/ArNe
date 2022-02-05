@@ -79,6 +79,8 @@ class Skill:
                 self.activation[d][t] = traj['acc'][t] - self.damping * \
                     (self.stiffness * (goal - traj['pos'][t]) - traj['vel'][t])
 
+        # Store in time major format
+        self.activation = self.activation.transpose()
         print("learned trajectory")
 
     def save_profile(self, filename):
@@ -93,7 +95,7 @@ class Skill:
 
         with open(filename, 'w') as f:
             writer = csv.writer(f, quotechar='#', delimiter=' ')
-            for row in self.activation.transpose():
+            for row in self.activation:
                 writer.writerow(row)
         print("saved trajectory profile here: {}".format(filename))
 
@@ -108,13 +110,13 @@ class Skill:
             reader = csv.reader(f, quotechar='#', delimiter=' ')
             for row in reader:
                 activation.append([float(row[i]) for i in range(len(row))])
-        self.activation = np.array(activation).transpose()
-        self.state_dim = self.activation.shape[0]
-        self.traj_points = self.activation.shape[1]
+        self.activation = np.array(activation)
+        self.state_dim = self.activation.shape[1]
+        self.traj_points = self.activation.shape[0]
 
         print("loaded trajectory profile")
 
-    def generate_new_trajectory(self, start_state, goal_state, duration):
+    def generate_new_trajectory(self, start_state, goal_state, duration, scale=1.0):
         """ Generate a temporally and spatially scaled state-only trajectory
 
         Note: Velocities and accelerations are computed as a by product of the
@@ -132,6 +134,25 @@ class Skill:
         pos = np.zeros((self.state_dim, self.traj_points))
         vel = np.zeros((self.state_dim, self.traj_points))
         acc = np.zeros((self.state_dim, self.traj_points))
+
+        # Rescale the translational part of the forcing term to take the new
+        # goal distance into consideration. The is necessary to balance the
+        # effect of the stiffness in the transformation system.
+        # We achieve this by projecting the Euclidean part of the forcing term
+        # onto the goal direction, scaling it, and re-adding the orthogonal
+        # component.
+        direction = np.array(goal_state[:3])
+        for i in range(self.traj_points):
+            act = self.activation[i]
+            f = act[:3]
+            f_projected = np.dot(f, direction) / np.dot(direction, direction) * direction
+            f_orthogonal = f - f_projected
+            f_projected *= scale
+            f = f_orthogonal + f_projected
+            self.activation[i] = np.concatenate((f, act[3:]))
+
+        # Make state-major for next step
+        self.activation = self.activation.transpose()
 
         # Obtain the trajectory as the solution to an initial
         # value problem by numerically integrating each dimension's
