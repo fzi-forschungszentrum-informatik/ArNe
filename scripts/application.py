@@ -220,30 +220,37 @@ class Application(object):
         _, recorded_states = read_rosbag(bagfile, state_topic=self.state_topic)
         start = [0, 0, 0, 0, 0, 0, 1, self.state[7]] # identity
 
-        # Global macros drive to the globally recorded goal and need to
-        # map that into our current end-effector coordinate system for
-        # skill generation.
-        if playback_type is MacroRequest.GLOBAL_MACRO:
-            goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
+        # Goals
+        local_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+        global_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
+        scale = np.linalg.norm(global_goal[:3]) / np.linalg.norm(local_goal[:3])
 
         # Local macros replicate the motion pattern in their local
         # coordinate system and apply it in our current end-effector
         # coordinate system.
-        elif playback_type is MacroRequest.LOCAL_MACRO:
-            goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
+        if playback_type is MacroRequest.LOCAL_MACRO:
+            goal = local_goal
+            scale = 1.0
+
+        # Global macros drive to the globally recorded goal and need to
+        # map that into our current end-effector coordinate system for
+        # skill generation.
+        elif playback_type is MacroRequest.GLOBAL_MACRO:
+            goal = global_goal
 
         # Hybrid macros drive to the globally recorded position but
         # keep their local orientation.
         else:
             playback_type = MacroRequest.HYBRID_MACRO
-            global_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(self.state)))
-            local_goal = transform_state(recorded_states[-1], transform=tr.inverse_matrix(homogeneous(recorded_states[0])))
-            scale = np.linalg.norm(global_goal[:3]) / np.linalg.norm(local_goal[:3])
             goal = [scale * i for i in local_goal[:3]] + local_goal[3:]
 
         # Compute how to move to the goal pose while keeping the
         # macro's motion profile.
-        trajectory = macro.generate_new_trajectory(start, goal, duration)
+        trajectory = macro.generate_new_trajectory(
+                start_state=start,
+                goal_state=goal,
+                duration=duration,
+                scale=scale)
 
         # Hybrid macros need an additional step to adequately display
         # the generated profile in the current end-effector frame.
