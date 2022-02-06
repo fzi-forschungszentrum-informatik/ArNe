@@ -1,0 +1,6 @@
+# Ignore generated trajectory files
+trajectories/*.pdf
+trajectories/*.csv
+
+# Ignore recorded rosbags 
+rosbags/*.bag
