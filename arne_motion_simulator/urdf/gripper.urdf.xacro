@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="gripper">
+
+<xacro:macro name="gripper" params="parent">
+
+        <xacro:property name="finger_radius" value="0.01" />
+        <xacro:property name="finger_length" value="0.1" />
+
+        <link name="gripper">
+                <visual name="visual">
+                        <geometry>
+                                <cylinder length="0.1" radius="0.02"/>
+                        </geometry>
+                </visual>
+                <visual name="visual">
+                        <origin xyz="0 0 ${-0.05 + 0.01}" rpy="0 0 0" />
+                        <geometry>
+                                <box size="0.02 0.15 0.02"/>
+                        </geometry>
+                </visual>
+        </link>
+        <joint name="finger_left_joint" type="prismatic">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <axis xyz="0 1 0" />
+                <limit upper="0" lower="0" velocity="0" effort="0"/>
+                <parent link="gripper"/>
+                <child link="finger_left"/>
+        </joint>
+        <link name="finger_left">
+                <visual name="visual">
+                        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+                        <geometry>
+                                <box size="0.02 0.02 0.1"/>
+                        </geometry>
+                </visual>
+        </link>
+        <joint name="finger_right_joint" type="prismatic">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <axis xyz="0 1 0" />
+                <limit upper="0" lower="0" velocity="0" effort="0"/>
+                <mimic joint="finger_left_joint" multiplier="-1" />
+                <parent link="gripper"/>
+                <child link="finger_right"/>
+        </joint>
+        <link name="finger_right">
+                <visual name="visual">
+                        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+                        <geometry>
+                                <box size="0.02 0.02 0.1"/>
+                        </geometry>
+                </visual>
+        </link>
+        <joint name="pose" type="floating">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <parent link="${parent}"/>
+                <child link="gripper"/>
+        </joint>
+</xacro:macro>
+</robot>
