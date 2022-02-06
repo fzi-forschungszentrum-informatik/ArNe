@@ -1,0 +1,43 @@
+# Principal service interface for GUI - ROS communication. 
+
+# This is a string identifier for the macro with a unique hash, e.g. "4e3f68".
+string id
+
+# Operation mode for the selected macro.
+uint8 mode
+
+# Supported modes:
+uint8 START_RECORDING = 0
+uint8 STOP_RECORDING = 1
+uint8 START_PLAYBACK = 2
+uint8 STOP_PLAYBACK = 3
+uint8 TOGGLE_PLAYBACK = 4
+uint8 DELETE_MACRO = 5
+uint8 SHOW_PLAYBACK = 6
+
+# Type of macro playback.
+uint8 playback_type
+
+# Supported playback types:
+# 0 : Hybrid macros converge to the globally recorded goal position but use
+#     the local orientation. This is useful when only the position is relevant
+#     and the orientation would distort the motion too much.
+#     A possible application is throwing things from a table top into a trash bin.
+# 1 : Local macros will move entirely local to the current robot position.
+#     A possible application is scratching an itchy spot on the forearm.
+# 2 : Global macros will converge to the absolute end pose that the robot had in the
+#     environment during macro recording.
+uint8 HYBRID_MACRO = 0
+uint8 LOCAL_MACRO = 1
+uint8 GLOBAL_MACRO = 2
+
+# Positive, non-zero desired duration of the playback in seconds.
+float64 duration
+
+---
+
+# Returns true if the commanded mode was applied successfully. False otherwise.
+bool success
+
+# Returns 'success' if successful. A printable error message otherwise.
+string message
