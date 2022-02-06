@@ -1,0 +1,16 @@
+# Setup for ROS-control boilerplate simulation of the Aria V2 arm.
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.03
+
+# Settings for ros_control hardware interface
+hardware_interface:
+  sim_control_mode: 0  # 0 = pos, 1 = vel
+  joints:
+    - Joint_1
+    - Joint_2
+    - Joint_3
+    - Joint_4
+    - Joint_5
+    - Joint_6
+    - Joint_7

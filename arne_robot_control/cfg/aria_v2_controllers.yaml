@@ -1,0 +1,67 @@
+# For the hw interface
+joint_names:
+    - Joint_1
+    - Joint_2
+    - Joint_3
+    - Joint_4
+    - Joint_5
+    - Joint_6
+    - Joint_7
+
+# For ROS controllers
+arm_only: &arm_only
+    - Joint_1
+    - Joint_2
+    - Joint_3
+    - Joint_4
+    - Joint_5
+    - Joint_6
+
+cartesian_controller:
+    type: "arne_robot_control/MotionSkillController"
+    #ik_solver: "selectively_damped_least_squares"
+    ik_solver: "forward_dynamics"
+    end_effector_link: "control"
+    robot_base_link: "Link_0"
+    joints: *arm_only
+    gripper: Joint_7
+
+    pd_gains:
+        trans_x: {p: 5.0}
+        trans_y: {p: 5.0}
+        trans_z: {p: 5.0}
+        rot_x: {p: 3.0}
+        rot_y: {p: 3.0}
+        rot_z: {p: 3.0}
+
+    solver:
+        error_scale: 5.0
+        iterations: 30
+ 
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+joint_trajectory_controller:
+  type: position_controllers/JointTrajectoryController
+  joints: *arm_only
+
+  # This is probably required for the real hardware
+  # -----------------------------------------------
+  #  constraints:
+  #    goal_time: 5.0
+  #    #      stopped_velocity_tolerance: 0.0
+  #    Joint_1: {trajectory: 0.0, goal: 0.0}
+  #    Joint_2: {trajectory: 0.0, goal: 0.0}
+  #    Joint_3: {trajectory: 0.0, goal: 0.0}
+  #    Joint_4: {trajectory: 0.0, goal: 0.0}
+  #    Joint_5: {trajectory: 0.0, goal: 0.0}
+  #    Joint_6: {trajectory: 0.0, goal: 0.0}
+  #    gains:
+  #      Joint_1: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+  #      Joint_2: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+  #      Joint_3: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+  #      Joint_4: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+  #      Joint_5: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+  #      Joint_6: {p: 10.0,  i: 1.0, d: 0.01, i_clamp: 1}
+

@@ -1,0 +1,50 @@
+<launch>
+        <!-- Configuration -->
+        <arg name="sim" default="true" />
+        <arg name="arm_type" default="aria_v2"/>
+
+        <arg name="debug" default="false"/>
+        <arg if="$(arg debug)" name="launch-prefix" value="screen -d -m gdb -command=$(env HOME)/.ros/my_debug_log --ex run --args"/>
+        <arg unless="$(arg debug)" name="launch-prefix" value=""/>
+
+        <arg name="controller_running_list" default="
+            joint_state_controller
+            cartesian_controller
+           " />
+        <arg name="controller_stopped_list" default="
+            joint_trajectory_controller
+             " />
+
+
+        <!-- Setup -->
+        <param name="robot_description" command="$(find xacro)/xacro '$(find arne_robot_control)/urdf/$(arg arm_type).urdf.xacro' "/>
+
+        <!-- Load controller configuration -->
+        <rosparam file="$(find arne_robot_control)/cfg/$(arg arm_type)_controllers.yaml"></rosparam>
+
+        <!-- Load hardware configuration and ROS control robot abstraction -->
+        <group if="$(arg sim)">
+                <rosparam file="$(find arne_robot_control)/cfg/$(arg arm_type)_sim_hw_config.yaml"></rosparam>
+                <node name="$(arg arm_type)_control_node" pkg="ros_control_boilerplate" type="sim_hw_main" output="screen" launch-prefix="$(arg launch-prefix)"/>
+        </group>
+        <group unless="$(arg sim)">
+                <rosparam file="$(find aria_startup)/config/connection_config.yaml"> </rosparam>
+                <node name="$(arg arm_type)_control_node" pkg="aria_driver" type="aria_ros_control" output="screen" launch-prefix="$(arg launch-prefix)"/>
+        </group>
+
+        <!-- Spawn controllers -->
+        <node name="running_controller_spawner" pkg="controller_manager" type="spawner" args="
+                $(arg controller_running_list)
+        " />
+        <node name="stopped_controller_spawner" pkg="controller_manager" type="spawner" args="--stopped
+                $(arg controller_stopped_list)
+        " />
+
+        <!-- Broadcast TF tree of robot and environment -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+        <!-- Visualization -->
+        <arg name="rviz_setup" value="-d $(find arne_robot_control)/etc/setup.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="$(arg rviz_setup)" output="screen"/>
+
+</launch>
