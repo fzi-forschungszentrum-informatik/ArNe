@@ -73,7 +73,10 @@ add_message_files(
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
+generate_messages(DEPENDENCIES
+        geometry_msgs
+        std_msgs
+        )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
