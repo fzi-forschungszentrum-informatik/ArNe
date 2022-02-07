@@ -1,4 +1,4 @@
-# Spacenav Utils
+# ArNe teleoperation
 A helper package to bring some additional functionality to the *spacenav_node* package.
 
 This package is meant to turn the *spacenav_node* from the *joystick_drivers* package into a force control input device.
@@ -10,8 +10,8 @@ Adjust the launch files as needed.
 
 ## Usage
 ```bash
-roslaunch spacenav_utils spacenav_to_wrench.launch
-roslaunch spacenav_utils buttons_events.launch
+roslaunch arne_teleoperation spacenav_to_wrench.launch
+roslaunch arne_teleoperation buttons_events.launch
 ```
 ## Disable GUI control in Gazebo
 When working with the 3DConnexion as a force control input device, you probably don't want to control gazebo's camera at the same time. Remember your kernel drivers still treat your force control thing as a space mouse, which is used by gazebo by default. To switch this behavior off add the following lines to the *~/.gazebo/gui.ini* file:

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>spacenav_utils</name>
+  <name>arne_teleoperation</name>
   <version>0.0.0</version>
-  <description>Republish spacenav twist messages as wrench messages</description>
+  <description>Teleoperation with spacemouse devices</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/spacenav_utils</url> -->
+  <!-- <url type="website">http://wiki.ros.org/arne_teleoperation</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -58,6 +58,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>spacenav_node</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
