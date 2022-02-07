@@ -6,7 +6,7 @@
   <author email="scherzin@fzi.de">Stefan Scherzinger</author> 
   <maintainer email="scherzin@fzi.de">Stefan Scherzinger</maintainer>
 
-  <license>Apache-2.0</license>
+  <license>Apache License 2.0</license>
   <url type="repository">https://github.com/fzi-forschungszentrum-informatik/arne</url> 
 
   <buildtool_depend>catkin</buildtool_depend>
