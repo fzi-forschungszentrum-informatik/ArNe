@@ -9,7 +9,7 @@
         </node>
 
         <!-- Link pressed buttons to actions -->
-        <node name="spacenav_buttons" pkg="spacenav_utils" type="buttons.py" output="screen">
+        <node name="spacenav_buttons" pkg="arne_teleoperation" type="buttons.py" output="screen">
                 <param name="joystick_topic" value="/spacenav/joy"/>
                 <rosparam command="load" file="$(find arne_robot_control)/etc/button_cmds.yaml" ></rosparam>
         </node>

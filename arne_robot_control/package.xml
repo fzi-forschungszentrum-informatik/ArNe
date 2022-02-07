@@ -87,7 +87,7 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz</exec_depend>
   <exec_depend>spacenav_node</exec_depend>
-  <exec_depend>spacenav_utils</exec_depend>
+  <exec_depend>arne_teleoperation</exec_depend>
 
   <!-- This is important for the export to work -->
   <exec_depend>controller_interface</exec_depend>

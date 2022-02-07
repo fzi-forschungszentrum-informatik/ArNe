@@ -72,6 +72,7 @@
   <exec_depend>rosbridge_server</exec_depend>
   <exec_depend>spacenav_node</exec_depend>
   <exec_depend>arne_skill_pipeline</exec_depend>
+  <exec_depend>arne_teleoperation</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
