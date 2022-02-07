@@ -1,0 +1,21 @@
+<package>
+  <name>arne</name>
+  <version>0.1.0</version>
+  <description>A skill recording and generalization framework for assistive manipulators</description>
+
+  <author email="scherzin@fzi.de">Stefan Scherzinger</author> 
+  <maintainer email="scherzin@fzi.de">Stefan Scherzinger</maintainer>
+
+  <license>Apache-2.0</license>
+  <url type="repository">https://github.com/fzi-forschungszentrum-informatik/arne</url> 
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>arne_application</run_depend>
+  <run_depend>arne_motion_simulator</run_depend>
+  <run_depend>arne_skill_pipeline</run_depend>
+  <run_depend>arne_teleoperation</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
