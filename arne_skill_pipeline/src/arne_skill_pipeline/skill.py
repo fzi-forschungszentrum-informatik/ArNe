@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from arne_skill_pipeline.trajectories import Trajectory
 import numpy as np
 import csv

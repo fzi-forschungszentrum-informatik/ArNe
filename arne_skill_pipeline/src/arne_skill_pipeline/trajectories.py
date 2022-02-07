@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from rosbag import Bag
 from rospy import Duration
 import numpy as np
