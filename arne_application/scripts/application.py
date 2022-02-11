@@ -18,6 +18,7 @@ import os
 import rospy
 import numpy as np
 import transformations as tr
+from datetime import datetime
 from pathlib import Path
 from arne_application.srv import Macro, MacroRequest, MacroResponse
 from arne_skill_pipeline.msg import State
@@ -26,7 +27,7 @@ from arne_skill_pipeline.skill import Skill
 from arne_skill_pipeline.rosbag_recorder import RosbagRecorder
 from arne_skill_pipeline.trajectory_player import TrajectoryPlayer
 from arne_skill_pipeline.trajectory_visualizer import TrajectoryVisualizer
-from arne_skill_pipeline.trajectories import read_rosbag, compute_trajectory, transform_state, transform_states, homogeneous
+from arne_skill_pipeline.trajectories import read_rosbag, write_rosbag, compute_trajectory, transform_state, transform_states, homogeneous
 
 
 class Application(object):
@@ -157,12 +158,16 @@ class Application(object):
 
                 # Record the execution for later analysis
                 if self.log_execution:
+                    stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.%f')[:-3]
+                    name = "{}_{}".format(req.id, stamp)
                     self.motion_recorder.start_recording(wait_for_data=True)
                     self.macro_player.play(
                         trajectory,
                         done_cb=lambda: self.motion_recorder.stop_recording(
-                            self.macro_folder, prefix="{}_".format(req.id), stamped=True)
+                            self.macro_folder, prefix=name)
                     )
+                    # Also save the desired trajectory in the bagfile format.
+                    write_rosbag(trajectory, "{}/{}.traj".format(self.macro_folder, name), self.state_topic)
                 else:
                     self.macro_player.play(trajectory)
 
