@@ -273,7 +273,7 @@ class Application(object):
 
         # Hybrid macros need an additional step to adequately display
         # the generated profile in the current end-effector frame.
-        # See the documentation for details.
+        # See the paper for details: https://arxiv.org/abs/2202.09221
         if playback_type is MacroRequest.HYBRID_MACRO:
 
             T1 = tr.inverse_matrix(homogeneous(local_goal))

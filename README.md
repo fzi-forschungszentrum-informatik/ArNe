@@ -9,7 +9,8 @@ Instead of steering the robot through all actions, applying self-recorded motion
 This package provides a *practical* implementation of Dynamic Movement Primitives (DMPs)
 for recording and playing back such motion patterns while teleoperating robotic arms.
 The core of the framework builds on *local*, *global*, and *hybrid* skills, which is a simple heuristic for composing single-handed tasks of daily life.
-The current focus is on six-axes assistive manipulators without additional sensors for perception.
+The current focus is on six-axes assistive manipulators without additional sensors for perception and 6D-joysticks for teleoperation.
+A [preprint](https://arxiv.org/pdf/2202.09221.pdf) with further details is available on [arXiv](https://arxiv.org/abs/2202.09221).
 
 ---
 **Note** This software is in the stage of an early demonstrator.
