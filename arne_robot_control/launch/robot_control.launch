@@ -1,6 +1,7 @@
 <launch>
         <!-- Configuration -->
         <arg name="sim" default="true" />
+        <arg name="rviz" default="true" />
         <arg name="arm_type" default="aria_v2"/>
 
         <arg name="debug" default="false"/>
@@ -44,7 +45,9 @@
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
         <!-- Visualization -->
-        <arg name="rviz_setup" value="-d $(find arne_robot_control)/etc/setup.rviz" />
-        <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="$(arg rviz_setup)" output="screen"/>
+        <group if="$(arg rviz)">
+                <arg name="rviz_setup" value="-d $(find arne_robot_control)/etc/setup.rviz" />
+                <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="$(arg rviz_setup)" output="screen"/>
+        </group>
 
 </launch>

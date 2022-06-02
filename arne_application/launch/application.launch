@@ -1,6 +1,7 @@
 <launch>
         <!-- General configuration -->
         <arg name="sim" default="true"/>
+        <arg name="rviz" default="true"/>
         <arg name="arm_type" default="aria_v2"/>
 
         <!-- High-level program logic for macro management -->
@@ -10,6 +11,7 @@
         <include file="$(find arne_robot_control)/launch/robot_control.launch">
                 <arg name="sim" value="$(arg sim)"/>
                 <arg name="arm_type" value="$(arg arm_type)"/>
+                <arg name="rviz" value="$(arg rviz)"/>
         </include>
 
         <!-- ROS bridge server for GUI communication -->
