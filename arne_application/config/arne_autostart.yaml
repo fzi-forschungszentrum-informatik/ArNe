@@ -1,0 +1,15 @@
+---
+common:
+  before_commands:
+    - fzirob change_environment arne
+    - cdros
+
+  default_window: roslaunch
+
+windows:
+  - name: roslaunch
+    commands:
+      - roslaunch arne_application application.launch sim:=false rviz:=false
+  - name: bash
+    commands:
+      - echo "hello arne!"
