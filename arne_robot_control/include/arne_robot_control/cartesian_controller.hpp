@@ -158,7 +158,7 @@ namespace arne_robot_control
     if constexpr (std::is_same<ControlPolicy,
         cartesian_motion_controller::CartesianMotionController<hardware_interface::PositionJointInterface>>::value)
     {
-      limitTargetOffset(ControlPolicy::m_target_frame);
+      limitReach(ControlPolicy::m_target_frame);
     }
 
     // Give visual feedback on the current target
@@ -182,7 +182,7 @@ namespace arne_robot_control
   void CartesianController<ControlPolicy>::dynamicReconfigureCallback(ControlConfig& config, uint32_t level)
   {
     m_local_coordinates = config.local_coordinates;
-    m_max_lin_offset = config.max_lin_offset;
+    m_max_reach = config.max_reach;
   }
 
   template <class ControlPolicy>
@@ -212,12 +212,13 @@ namespace arne_robot_control
   }
 
   template <class ControlPolicy>
-  void CartesianController<ControlPolicy>::limitTargetOffset(KDL::Frame& target)
+  void CartesianController<ControlPolicy>::limitReach(KDL::Frame& target)
   {
-    auto offset = target.p - ControlPolicy::m_current_frame.p;
-    if (offset.Normalize() > m_max_lin_offset)
+    // Make sure that target's Cartesian distance is below max_reach.
+    auto scale = target.p.Norm() / m_max_reach;
+    if (scale > 1.0)
     {
-      target.p = ControlPolicy::m_current_frame.p + offset * m_max_lin_offset;
+      target.p = target.p / scale;
     }
   }
 }

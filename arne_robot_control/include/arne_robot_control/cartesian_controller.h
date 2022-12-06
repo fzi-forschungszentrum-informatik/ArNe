@@ -83,9 +83,9 @@ namespace arne_robot_control
     private:
       //! Perform realtime updates to how Cartesian control behaves
       void dynamicReconfigureCallback(ControlConfig& config, uint32_t level);
-      void limitTargetOffset(KDL::Frame& target);
+      void limitReach(KDL::Frame& target);
       std::atomic<bool> m_local_coordinates;
-      std::atomic<double> m_max_lin_offset;
+      std::atomic<double> m_max_reach;
 
       std::shared_ptr<dynamic_reconfigure::Server<ControlConfig>> m_reconfig_server;
       dynamic_reconfigure::Server<ControlConfig>::CallbackType callback_type_;

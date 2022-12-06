@@ -39,7 +39,7 @@ cartesian_controller:
         iterations: 30
 
     teaching:
-            max_lin_offset: 0.1
+            max_reach: 0.7
  
 joint_state_controller:
   type: joint_state_controller/JointStateController
